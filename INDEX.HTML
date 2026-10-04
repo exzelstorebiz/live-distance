@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Live Distance - GPS Test</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f3fa;
+      color: #202020;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .gps-card {
+      width: 100%;
+      max-width: 420px;
+      background: #ffffff;
+      border-radius: 22px;
+      padding: 28px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.10);
+      border-top: 6px solid #7c3aed;
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .brand h1 {
+      color: #7c3aed;
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .brand p {
+      color: #666666;
+      font-size: 14px;
+    }
+
+    .status-box {
+      background: #f4f0ff;
+      border-radius: 14px;
+      padding: 15px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: #ff7a00;
+      border-radius: 50%;
+      margin-right: 7px;
+    }
+
+    .status-text {
+      font-weight: bold;
+      color: #5b21b6;
+    }
+
+    .data-row {
+      padding: 14px 0;
+      border-bottom: 1px solid #eeeeee;
+    }
+
+    .data-row:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      display: block;
+      font-size: 13px;
+      color: #777777;
+      margin-bottom: 5px;
+    }
+
+    .value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #222222;
+      word-break: break-word;
+    }
+
+    .gps-button {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 15px;
+      margin-top: 22px;
+      background: #7c3aed;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .gps-button:hover {
+      background: #6d28d9;
+    }
+
+    .gps-button:disabled {
+      background: #b8a4e8;
+      cursor: not-allowed;
+    }
+
+    .note {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 12px;
+      color: #888888;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="gps-card">
+
+    <div class="brand">
+      <h1>LIVE DISTANCE</h1>
+      <p>GPS Live Test</p>
+    </div>
+
+    <div class="status-box">
+      <span class="status-dot"></span>
+      <span class="status-text" id="status">GPS belum aktif</span>
+    </div>
+
+    <div class="data-row">
+      <span class="label">Latitude</span>
+      <span class="value" id="latitude">-</span>
+    </div>
+
+    <div class="data-row">
+      <span class="label">Longitude</span>
+      <span class="value" id="longitude">-</span>
+    </div>
+
+    <div class="data-row">
+      <span class="label">Akurasi GPS</span>
+      <span class="value" id="accuracy">-</span>
+    </div>
+
+    <div class="data-row">
+      <span class="label">Update terakhir</span>
+      <span class="value" id="updated">-</span>
+    </div>
+
+    <button class="gps-button" id="gpsButton">
+      AKTIFKAN GPS
+    </button>
+
+    <p class="note">
+      Tahap 1 — Pengujian posisi GPS secara live.
+    </p>
+
+  </main>
+
+  <script>
+
+    const statusElement = document.getElementById("status");
+    const latitudeElement = document.getElementById("latitude");
+    const longitudeElement = document.getElementById("longitude");
+    const accuracyElement = document.getElementById("accuracy");
+    const updatedElement = document.getElementById("updated");
+    const gpsButton = document.getElementById("gpsButton");
+
+    let watchId = null;
+
+    function success(position) {
+
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      const accuracy = position.coords.accuracy;
+
+      latitudeElement.textContent = latitude.toFixed(7);
+      longitudeElement.textContent = longitude.toFixed(7);
+      accuracyElement.textContent = "± " + accuracy.toFixed(1) + " meter";
+
+      updatedElement.textContent =
+        new Date().toLocaleTimeString("id-ID");
+
+      statusElement.textContent = "GPS AKTIF";
+    }
+
+    function error(error) {
+
+      statusElement.textContent = "GPS gagal membaca lokasi";
+
+      console.log("GPS Error:", error);
+
+      if (error.code === 1) {
+        statusElement.textContent = "Izin lokasi ditolak";
+      }
+
+      if (error.code === 2) {
+        statusElement.textContent = "Lokasi tidak tersedia";
+      }
+
+      if (error.code === 3) {
+        statusElement.textContent = "GPS terlalu lama merespons";
+      }
+    }
+
+    function startGPS() {
+
+      if (!navigator.geolocation) {
+        statusElement.textContent =
+          "Browser tidak mendukung GPS";
+        return;
+      }
+
+      statusElement.textContent = "Mencari GPS...";
+      gpsButton.disabled = true;
+
+      watchId = navigator.geolocation.watchPosition(
+        success,
+        error,
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 10000
+        }
+      );
+    }
+
+    gpsButton.addEventListener("click", startGPS);
+
+  </script>
+
+</body>
+</html>
