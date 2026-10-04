@@ -738,6 +738,51 @@ function perbaruiJarak() {
   }
 }
 
+  function perbaruiGarisRute() {
+
+  if (garisRute) {
+    map.removeLayer(garisRute);
+    garisRute = null;
+  }
+
+  const jalur = [];
+
+  if (titikA) {
+    jalur.push([
+      titikA.lat,
+      titikA.lon
+    ]);
+  }
+
+  if (posisiSaya) {
+    jalur.push([
+      posisiSaya.lat,
+      posisiSaya.lon
+    ]);
+  }
+
+  if (titikB) {
+    jalur.push([
+      titikB.lat,
+      titikB.lon
+    ]);
+  }
+
+  if (jalur.length >= 2) {
+
+    garisRute = L.polyline(
+      jalur,
+      {
+        color: "#7B2FF7",
+        weight: 5,
+        opacity: 0.85,
+        lineCap: "round",
+        lineJoin: "round"
+      }
+    ).addTo(map);
+  }
+}
+  
 function tampilkanSemuaTitik() {
 
   const titik = [];
