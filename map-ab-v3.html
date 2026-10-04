@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>LIVE DISTANCE - A + SAYA + B</title>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f3f8;
+  color: #202020;
+}
+
+.header {
+  background: #7138e8;
+  color: white;
+  text-align: center;
+  padding: 18px 10px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 27px;
+  font-weight: 800;
+}
+
+.header p {
+  margin: 5px 0 0;
+  font-size: 15px;
+}
+
+.container {
+  max-width: 760px;
+  margin: auto;
+  padding: 14px;
+}
+
+.map-box {
+  background: white;
+  border: 4px solid #7138e8;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 5px 18px rgba(0,0,0,.08);
+}
+
+#map {
+  width: 100%;
+  height: 430px;
+}
+
+.card {
+  background: white;
+  margin-top: 14px;
+  padding: 18px;
+  border-radius: 24px;
+  box-shadow: 0 5px 18px rgba(0,0,0,.07);
+}
+
+.status {
+  background: #f1eaff;
+  color: #5730a8;
+  border-radius: 18px;
+  padding: 16px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 18px;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background: #ff8500;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+button {
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  padding: 16px;
+  color: white;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.gps-btn {
+  background: #b58bea;
+}
+
+.a-btn {
+  background: #18a84b;
+}
+
+.b-btn {
+  background: #ff8100;
+}
+
+.clear-btn {
+  background: #555;
+}
+
+.section {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #ddd;
+}
+
+.section-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.a-title {
+  color: #179b46;
+}
+
+.b-title {
+  color: #ff8100;
+}
+
+.s-title {
+  color: #7138e8;
+}
+
+.coordinate {
+  font-size: 16px;
+  color: #666;
+  margin: 8px 0;
+  word-break: break-word;
+}
+
+.distance-box {
+  background: #fafafa;
+  border-left: 5px solid #7138e8;
+  border-radius: 15px;
+  padding: 14px;
+  margin-top: 10px;
+}
+
+.distance-label {
+  color: #777;
+  font-size: 14px;
+}
+
+.distance-value {
+  font-size: 28px;
+  font-weight: 800;
+  margin-top: 5px;
+}
+
+.info-box {
+  background: #fafafa;
+  border-radius: 15px;
+  padding: 13px;
+  margin-top: 10px;
+}
+
+.info-label {
+  color: #777;
+  font-size: 14px;
+}
+
+.info-value {
+  font-size: 21px;
+  font-weight: 800;
+  margin-top: 5px;
+}
+
+.marker-a,
+.marker-b,
+.marker-s {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 900;
+  font-size: 18px;
+  border: 4px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,.35);
+}
+
+.marker-a {
+  background: #18a84b;
+}
+
+.marker-b {
+  background: #ff8100;
+}
+
+.marker-s {
+  background: #7138e8;
+}
+
+.legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-a {
+  background: #18a84b;
+}
+
+.legend-s {
+  background: #7138e8;
+}
+
+.legend-b {
+  background: #ff8100;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h1>LIVE DISTANCE</h1>
+  <p>A + SAYA + B</p>
+</div>
+
+<div class="container">
+
+  <div class="map-box">
+    <div id="map"></div>
+  </div>
+
+  <div class="card">
+
+    <div class="status">
+      <span class="status-dot"></span>
+      <span id="gpsStatus">GPS AKTIF</span>
+    </div>
+
+    <button class="gps-btn" onclick="aktifkanGPS()">
+      AKTIFKAN GPS
+    </button>
+
+    <div class="legend">
+      <span>
+        <i class="legend-dot legend-a"></i>
+        A — Awal
+      </span>
+
+      <span>
+        <i class="legend-dot legend-s"></i>
+        S — Saya
+      </span>
+
+      <span>
+        <i class="legend-dot legend-b"></i>
+        B — Tujuan
+      </span>
+    </div>
+
+    <div class="section">
+      <div class="section-title a-title">
+        🟢 TITIK A — AWAL
+      </div>
+
+      <div class="coordinate" id="aCoordinate">
+        Belum ditentukan
+      </div>
+
+      <button class="a-btn" onclick="jadikanA()">
+        JADIKAN POSISI SAYA SEBAGAI A
+      </button>
+    </div>
+
+    <div class="section">
+      <div class="section-title b-title">
+        🟠 TITIK B — TUJUAN
+      </div>
+
+      <div class="coordinate" id="bCoordinate">
+        Belum ditentukan
+      </div>
+
+      <button class="b-btn" onclick="jadikanB()">
+        JADIKAN POSISI SAYA SEBAGAI B
+      </button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        📏 JARAK
+      </div>
+
+      <div class="distance-box">
+        <div class="distance-label">A → SAYA</div>
+        <div class="distance-value" id="distanceAS">
+          -
+        </div>
+      </div>
+
+      <div class="distance-box">
+        <div class="distance-label">SAYA → B</div>
+        <div class="distance-value" id="distanceSB">
+          -
+        </div>
+      </div>
+
+      <div class="distance-box">
+        <div class="distance-label">A → B</div>
+        <div class="distance-value" id="distanceAB">
+          -
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title s-title">
+        📍 POSISI SAYA
+      </div>
+
+      <div class="info-box">
+        <div class="info-label">Latitude</div>
+        <div class="info-value" id="latitude">
+          -
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-label">Longitude</div>
+        <div class="info-value" id="longitude">
+          -
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-label">Akurasi</div>
+        <div class="info-value" id="accuracy">
+          -
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-label">Update</div>
+        <div class="info-value" id="updateTime">
+          -
+        </div>
+      </div>
+
+      <button class="clear-btn" onclick="hapusAB()">
+        HAPUS TITIK A & B
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+let map;
+
+let posisiSaya = null;
+let titikA = null;
+let titikB = null;
+
+let markerSaya = null;
+let markerA = null;
+let markerB = null;
+
+let circleAkurasi = null;
+
+function buatIcon(className, text) {
+  return L.divIcon({
+    className: "",
+    html: '<div class="' + className + '">' + text + '</div>',
+    iconSize: [42, 42],
+    iconAnchor: [21, 21]
+  });
+}
+
+const iconA = buatIcon("marker-a", "A");
+const iconS = buatIcon("marker-s", "S");
+const iconB = buatIcon("marker-b", "B");
+
+map = L.map("map").setView(
+  [-6.387, 106.936],
+  16
+);
+
+L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {
+    maxZoom: 19,
+    attribution:
+      '&copy; OpenStreetMap contributors'
+  }
+).addTo(map);
+
+function aktifkanGPS() {
+
+  if (!navigator.geolocation) {
+
+    document.getElementById("gpsStatus").textContent =
+      "GPS TIDAK DIDUKUNG";
+
+    return;
+  }
+
+  document.getElementById("gpsStatus").textContent =
+    "MENCARI POSISI...";
+
+  navigator.geolocation.watchPosition(
+
+    function(position) {
+
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const accuracy = position.coords.accuracy;
+
+      posisiSaya = {
+        lat: lat,
+        lon: lon,
+        accuracy: accuracy
+      };
+
+      document.getElementById("gpsStatus").textContent =
+        "GPS AKTIF";
+
+      document.getElementById("latitude").textContent =
+        lat.toFixed(7);
+
+      document.getElementById("longitude").textContent =
+        lon.toFixed(7);
+
+      document.getElementById("accuracy").textContent =
+        "± " + Math.round(accuracy) + " meter";
+
+      document.getElementById("updateTime").textContent =
+        new Date().toLocaleTimeString("id-ID");
+
+      if (!markerSaya) {
+
+        markerSaya = L.marker(
+          [lat, lon],
+          { icon: iconS }
+        ).addTo(map);
+
+        markerSaya.bindPopup(
+          "<b>SAYA</b><br>Posisi GPS saat ini"
+        );
+
+        map.setView(
+          [lat, lon],
+          17
+        );
+
+      } else {
+
+        markerSaya.setLatLng(
+          [lat, lon]
+        );
+      }
+
+      if (!circleAkurasi) {
+
+        circleAkurasi = L.circle(
+          [lat, lon],
+          {
+            radius: accuracy,
+            color: "#7138e8",
+            fillColor: "#7138e8",
+            fillOpacity: 0.12,
+            weight: 2
+          }
+        ).addTo(map);
+
+      } else {
+
+        circleAkurasi.setLatLng(
+          [lat, lon]
+        );
+
+        circleAkurasi.setRadius(
+          accuracy
+        );
+      }
+
+      perbaruiJarak();
+
+    },
+
+    function(error) {
+
+      document.getElementById("gpsStatus").textContent =
+        "GPS ERROR";
+
+      console.log(error);
+
+    },
+
+    {
+      enableHighAccuracy: true,
+      maximumAge: 1000,
+      timeout: 10000
+    }
+  );
+}
+
+function jadikanA() {
+
+  if (!posisiSaya) {
+
+    alert(
+      "Posisi GPS belum tersedia."
+    );
+
+    return;
+  }
+
+  titikA = {
+    lat: posisiSaya.lat,
+    lon: posisiSaya.lon
+  };
+
+  if (markerA) {
+    map.removeLayer(markerA);
+  }
+
+  markerA = L.marker(
+    [titikA.lat, titikA.lon],
+    { icon: iconA }
+  ).addTo(map);
+
+  markerA.bindPopup(
+    "<b>TITIK A</b><br>Titik Awal"
+  );
+
+  tampilkanA();
+
+  perbaruiJarak();
+
+  tampilkanSemuaTitik();
+}
+
+function jadikanB() {
+
+  if (!posisiSaya) {
+
+    alert(
+      "Posisi GPS belum tersedia."
+    );
+
+    return;
+  }
+
+  titikB = {
+    lat: posisiSaya.lat,
+    lon: posisiSaya.lon
+  };
+
+  if (markerB) {
+    map.removeLayer(markerB);
+  }
+
+  markerB = L.marker(
+    [titikB.lat, titikB.lon],
+    { icon: iconB }
+  ).addTo(map);
+
+  markerB.bindPopup(
+    "<b>TITIK B</b><br>Tujuan"
+  );
+
+  tampilkanB();
+
+  perbaruiJarak();
+
+  tampilkanSemuaTitik();
+}
+
+function tampilkanA() {
+
+  document.getElementById("aCoordinate").textContent =
+    "Lat: " +
+    titikA.lat.toFixed(7) +
+    " | Lon: " +
+    titikA.lon.toFixed(7);
+}
+
+function tampilkanB() {
+
+  document.getElementById("bCoordinate").textContent =
+    "Lat: " +
+    titikB.lat.toFixed(7) +
+    " | Lon: " +
+    titikB.lon.toFixed(7);
+}
+
+function jarakMeter(lat1, lon1, lat2, lon2) {
+
+  const R = 6371000;
+
+  const p1 =
+    lat1 * Math.PI / 180;
+
+  const p2 =
+    lat2 * Math.PI / 180;
+
+  const deltaLat =
+    (lat2 - lat1) *
+    Math.PI / 180;
+
+  const deltaLon =
+    (lon2 - lon1) *
+    Math.PI / 180;
+
+  const a =
+    Math.sin(deltaLat / 2) *
+    Math.sin(deltaLat / 2) +
+    Math.cos(p1) *
+    Math.cos(p2) *
+    Math.sin(deltaLon / 2) *
+    Math.sin(deltaLon / 2);
+
+  const c =
+    2 *
+    Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    );
+
+  return R * c;
+}
+
+function formatJarak(meter) {
+
+  if (meter < 1000) {
+
+    return Math.round(meter) + " meter";
+
+  }
+
+  return (
+    (meter / 1000)
+      .toFixed(2)
+      .replace(".", ",")
+    + " km"
+  );
+}
+
+function perbaruiJarak() {
+
+  if (
+    titikA &&
+    posisiSaya
+  ) {
+
+    const dAS =
+      jarakMeter(
+        titikA.lat,
+        titikA.lon,
+        posisiSaya.lat,
+        posisiSaya.lon
+      );
+
+    document.getElementById("distanceAS")
+      .textContent =
+      formatJarak(dAS);
+  }
+
+  if (
+    posisiSaya &&
+    titikB
+  ) {
+
+    const dSB =
+      jarakMeter(
+        posisiSaya.lat,
+        posisiSaya.lon,
+        titikB.lat,
+        titikB.lon
+      );
+
+    document.getElementById("distanceSB")
+      .textContent =
+      formatJarak(dSB);
+  }
+
+  if (
+    titikA &&
+    titikB
+  ) {
+
+    const dAB =
+      jarakMeter(
+        titikA.lat,
+        titikA.lon,
+        titikB.lat,
+        titikB.lon
+      );
+
+    document.getElementById("distanceAB")
+      .textContent =
+      formatJarak(dAB);
+  }
+}
+
+function tampilkanSemuaTitik() {
+
+  const titik = [];
+
+  if (titikA) {
+    titik.push(
+      [titikA.lat, titikA.lon]
+    );
+  }
+
+  if (posisiSaya) {
+    titik.push(
+      [posisiSaya.lat, posisiSaya.lon]
+    );
+  }
+
+  if (titikB) {
+    titik.push(
+      [titikB.lat, titikB.lon]
+    );
+  }
+
+  if (titik.length >= 2) {
+
+    const bounds =
+      L.latLngBounds(titik);
+
+    map.fitBounds(
+      bounds,
+      {
+        padding: [40, 40]
+      }
+    );
+  }
+}
+
+function hapusAB() {
+
+  titikA = null;
+  titikB = null;
+
+  if (markerA) {
+    map.removeLayer(markerA);
+    markerA = null;
+  }
+
+  if (markerB) {
+    map.removeLayer(markerB);
+    markerB = null;
+  }
+
+  document.getElementById("aCoordinate").textContent =
+    "Belum ditentukan";
+
+  document.getElementById("bCoordinate").textContent =
+    "Belum ditentukan";
+
+  document.getElementById("distanceAS").textContent =
+    "-";
+
+  document.getElementById("distanceSB").textContent =
+    "-";
+
+  document.getElementById("distanceAB").textContent =
+    "-";
+}
+
+aktifkanGPS();
+
+</script>
+
+</body>
+</html>
