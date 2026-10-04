@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>LIVE DISTANCE - Live Map</title>
+
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIINfQ3Q4kP6k5r4M0M8M5M6M8M8M8M8M8="
+    crossorigin=""
+  />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f3fa;
+      color: #202020;
+      min-height: 100vh;
+    }
+
+    .app-header {
+      background: #7c3aed;
+      color: #ffffff;
+      padding: 18px 20px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+    }
+
+    .app-header h1 {
+      font-size: 25px;
+      margin-bottom: 4px;
+    }
+
+    .app-header p {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .map-wrapper {
+      padding: 15px;
+    }
+
+    #map {
+      width: 100%;
+      height: 58vh;
+      min-height: 380px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+      border: 3px solid #7c3aed;
+    }
+
+    .info-panel {
+      margin: 15px;
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #f4f0ff;
+      color: #5b21b6;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: #ff7a00;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .data-box {
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .data-label {
+      display: block;
+      color: #777777;
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .data-value {
+      font-size: 16px;
+      font-weight: bold;
+      word-break: break-word;
+    }
+
+    .gps-button {
+      width: 100%;
+      margin-top: 15px;
+      padding: 14px;
+      border: none;
+      border-radius: 13px;
+      background: #ff7a00;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .gps-button:disabled {
+      background: #c9b7aa;
+      cursor: not-allowed;
+    }
+
+    .user-marker {
+      position: relative;
+      width: 52px;
+      height: 52px;
+    }
+
+    .user-marker-ring {
+      position: absolute;
+      width: 52px;
+      height: 52px;
+      background: rgba(124, 58, 237, 0.18);
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+
+    .user-marker-icon {
+      position: absolute;
+      left: 9px;
+      top: 9px;
+      width: 34px;
+      height: 34px;
+      background: #7c3aed;
+      border: 4px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.85);
+        opacity: 0.8;
+      }
+
+      70% {
+        transform: scale(1.25);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1.25);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 600px) {
+
+      #map {
+        height: 56vh;
+        min-height: 350px;
+      }
+
+      .data-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .app-header h1 {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="app-header">
+    <h1>LIVE DISTANCE</h1>
+    <p>Live GPS Map</p>
+  </header>
+
+  <section class="map-wrapper">
+    <div id="map"></div>
+  </section>
+
+  <section class="info-panel">
+
+    <div class="status">
+      <span class="status-dot"></span>
+      <span id="status">GPS belum aktif</span>
+    </div>
+
+    <div class="data-grid">
+
+      <div class="data-box">
+        <span class="data-label">Latitude</span>
+        <span class="data-value" id="latitude">-</span>
+      </div>
+
+      <div class="data-box">
+        <span class="data-label">Longitude</span>
+        <span class="data-value" id="longitude">-</span>
+      </div>
+
+      <div class="data-box">
+        <span class="data-label">Akurasi GPS</span>
+        <span class="data-value" id="accuracy">-</span>
+      </div>
+
+      <div class="data-box">
+        <span class="data-label">Update terakhir</span>
+        <span class="data-value" id="updated">-</span>
+      </div>
+
+    </div>
+
+    <button class="gps-button" id="gpsButton">
+      AKTIFKAN GPS
+    </button>
+
+  </section>
+
+  <!-- Leaflet -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin="">
+  </script>
+
+  <script>
+
+    const statusElement =
+      document.getElementById("status");
+
+    const latitudeElement =
+      document.getElementById("latitude");
+
+    const longitudeElement =
+      document.getElementById("longitude");
+
+    const accuracyElement =
+      document.getElementById("accuracy");
+
+    const updatedElement =
+      document.getElementById("updated");
+
+    const gpsButton =
+      document.getElementById("gpsButton");
+
+
+    /* =========================
+       PETA
+    ========================= */
+
+    const map = L.map("map").setView(
+      [-6.200000, 106.816666],
+      13
+    );
+
+
+    L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom: 19,
+        attribution:
+          '&copy; OpenStreetMap contributors'
+      }
+    ).addTo(map);
+
+
+    /* =========================
+       IKON SAYA
+    ========================= */
+
+    const userIcon = L.divIcon({
+
+      className: "",
+
+      html: `
+        <div class="user-marker">
+
+          <div class="user-marker-ring"></div>
+
+          <div class="user-marker-icon">
+            S
+          </div>
+
+        </div>
+      `,
+
+      iconSize: [52, 52],
+
+      iconAnchor: [26, 26]
+
+    });
+
+
+    let userMarker = null;
+
+    let accuracyCircle = null;
+
+    let watchId = null;
+
+
+    /* =========================
+       GPS BERHASIL
+    ========================= */
+
+    function success(position) {
+
+      const latitude =
+        position.coords.latitude;
+
+      const longitude =
+        position.coords.longitude;
+
+      const accuracy =
+        position.coords.accuracy;
+
+
+      latitudeElement.textContent =
+        latitude.toFixed(7);
+
+      longitudeElement.textContent =
+        longitude.toFixed(7);
+
+      accuracyElement.textContent =
+        "± " + accuracy.toFixed(1) + " meter";
+
+      updatedElement.textContent =
+        new Date().toLocaleTimeString("id-ID");
+
+
+      statusElement.textContent =
+        "GPS AKTIF";
+
+
+      const currentPosition =
+        [latitude, longitude];
+
+
+      /* =========================
+         MARKER SAYA
+      ========================= */
+
+      if (!userMarker) {
+
+        userMarker =
+          L.marker(
+            currentPosition,
+            {
+              icon: userIcon,
+              zIndexOffset: 1000
+            }
+          ).addTo(map);
+
+        userMarker.bindPopup(
+          "<strong>SAYA</strong><br>Posisi GPS Anda"
+        );
+
+      } else {
+
+        userMarker.setLatLng(
+          currentPosition
+        );
+
+      }
+
+
+      /* =========================
+         LINGKARAN AKURASI
+      ========================= */
+
+      if (!accuracyCircle) {
+
+        accuracyCircle =
+          L.circle(
+            currentPosition,
+            {
+              radius: accuracy,
+              color: "#7c3aed",
+              fillColor: "#7c3aed",
+              fillOpacity: 0.12,
+              weight: 2
+            }
+          ).addTo(map);
+
+      } else {
+
+        accuracyCircle.setLatLng(
+          currentPosition
+        );
+
+        accuracyCircle.setRadius(
+          accuracy
+        );
+
+      }
+
+
+      /* =========================
+         PETA MENGIKUTI SAYA
+      ========================= */
+
+      map.setView(
+        currentPosition,
+        Math.max(map.getZoom(), 16),
+        {
+          animate: true
+        }
+      );
+
+    }
+
+
+    /* =========================
+       GPS ERROR
+    ========================= */
+
+    function error(error) {
+
+      console.log(
+        "GPS Error:",
+        error
+      );
+
+
+      if (error.code === 1) {
+
+        statusElement.textContent =
+          "Izin lokasi ditolak";
+
+      } else if (error.code === 2) {
+
+        statusElement.textContent =
+          "Lokasi tidak tersedia";
+
+      } else if (error.code === 3) {
+
+        statusElement.textContent =
+          "GPS terlalu lama merespons";
+
+      } else {
+
+        statusElement.textContent =
+          "GPS gagal membaca lokasi";
+
+      }
+
+    }
+
+
+    /* =========================
+       MULAI GPS
+    ========================= */
+
+    function startGPS() {
+
+      if (!navigator.geolocation) {
+
+        statusElement.textContent =
+          "Browser tidak mendukung GPS";
+
+        return;
+
+      }
+
+
+      statusElement.textContent =
+        "Mencari GPS...";
+
+      gpsButton.disabled = true;
+
+
+      watchId =
+        navigator.geolocation.watchPosition(
+          success,
+          error,
+          {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 10000
+          }
+        );
+
+    }
+
+
+    gpsButton.addEventListener(
+      "click",
+      startGPS
+    );
+
+  </script>
+
+</body>
+</html>
