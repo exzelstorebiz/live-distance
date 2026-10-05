@@ -938,6 +938,131 @@ function perbaruiJarak() {
     );
   }
 }
+
+  function perbaruiWarnaRute() {
+
+  if (!posisiSaya || !ruteTujuan) {
+    return;
+  }
+
+  const layers =
+    ruteTujuan.getLayers();
+
+  if (
+    !layers.length ||
+    !layers[0].getLatLngs
+  ) {
+    return;
+  }
+
+  const titikRute =
+    layers[0].getLatLngs();
+
+  if (!titikRute.length) {
+    return;
+  }
+
+  let indeksTerdekat = 0;
+  let jarakTerdekat = Infinity;
+
+  for (
+    let i = 0;
+    i < titikRute.length;
+    i++
+  ) {
+
+    const jarak =
+      jarakMeter(
+        posisiSaya.lat,
+        posisiSaya.lon,
+        titikRute[i].lat,
+        titikRute[i].lng
+      );
+
+    if (jarak < jarakTerdekat) {
+
+      jarakTerdekat = jarak;
+      indeksTerdekat = i;
+    }
+  }
+
+  const jalurDilalui = [];
+  const jalurTujuan = [];
+
+  for (
+    let i = 0;
+    i <= indeksTerdekat;
+    i++
+  ) {
+
+    jalurDilalui.push([
+      titikRute[i].lat,
+      titikRute[i].lng
+    ]);
+  }
+
+  jalurDilalui.push([
+    posisiSaya.lat,
+    posisiSaya.lon
+  ]);
+
+  jalurTujuan.push([
+    posisiSaya.lat,
+    posisiSaya.lon
+  ]);
+
+  for (
+    let i = indeksTerdekat + 1;
+    i < titikRute.length;
+    i++
+  ) {
+
+    jalurTujuan.push([
+      titikRute[i].lat,
+      titikRute[i].lng
+    ]);
+  }
+
+  if (ruteSudahDilalui) {
+    map.removeLayer(ruteSudahDilalui);
+    ruteSudahDilalui = null;
+  }
+
+  if (ruteBelumDilalui) {
+    map.removeLayer(ruteBelumDilalui);
+    ruteBelumDilalui = null;
+  }
+
+  if (jalurDilalui.length >= 2) {
+
+    ruteSudahDilalui =
+      L.polyline(
+        jalurDilalui,
+        {
+          color: "#FF8A00",
+          weight: 6,
+          opacity: 0.95,
+          lineCap: "round",
+          lineJoin: "round"
+        }
+      ).addTo(map);
+  }
+
+  if (jalurTujuan.length >= 2) {
+
+    ruteBelumDilalui =
+      L.polyline(
+        jalurTujuan,
+        {
+          color: "#7B2FF7",
+          weight: 6,
+          opacity: 0.95,
+          lineCap: "round",
+          lineJoin: "round"
+        }
+      ).addTo(map);
+  }
+}
   let garisLive = null;
 
 function perbaruiGarisLive() {
