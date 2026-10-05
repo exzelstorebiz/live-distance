@@ -652,6 +652,20 @@ function jadikanB() {
   tampilkanSemuaTitik();
 }
 
+let modePilihB = false;
+
+function aktifkanPilihB() {
+
+  modePilihB = true;
+
+  document.getElementById("gpsStatus").textContent =
+    "PILIH TUJUAN DI PETA";
+
+  alert(
+    "Silakan ketuk lokasi yang ingin dijadikan TUJUAN B pada peta."
+  );
+}
+  
 function tampilkanA() {
 
   document.getElementById("aCoordinate").textContent =
