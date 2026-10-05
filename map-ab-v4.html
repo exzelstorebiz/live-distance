@@ -665,7 +665,42 @@ function aktifkanPilihB() {
     "Silakan ketuk lokasi yang ingin dijadikan TUJUAN B pada peta."
   );
 }
-  
+
+  function pilihBTitik(e) {
+
+  if (!modePilihB) {
+    return;
+  }
+
+  titikB = {
+    lat: e.latlng.lat,
+    lon: e.latlng.lng
+  };
+
+  if (markerB) {
+    map.removeLayer(markerB);
+    markerB = null;
+  }
+
+  markerB = L.marker(
+    [titikB.lat, titikB.lon],
+    { icon: iconB }
+  ).addTo(map);
+
+  markerB.bindPopup(
+    "<b>TITIK B</b><br>Tujuan"
+  );
+
+  tampilkanB();
+
+  perbaruiJarak();
+  tampilkanSemuaTitik();
+
+  modePilihB = false;
+
+  document.getElementById("gpsStatus").textContent =
+    "GPS AKTIF";
+}
 function tampilkanA() {
 
   document.getElementById("aCoordinate").textContent =
