@@ -446,9 +446,14 @@ function aktifkanGPS() {
 
     function(position) {
 
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-      const accuracy = position.coords.accuracy;
+      const lat =
+        position.coords.latitude;
+
+      const lon =
+        position.coords.longitude;
+
+      const accuracy =
+        position.coords.accuracy;
 
       posisiSaya = {
         lat: lat,
@@ -471,12 +476,18 @@ function aktifkanGPS() {
       document.getElementById("updateTime").textContent =
         new Date().toLocaleTimeString("id-ID");
 
+
+      /* =========================
+         MARKER SAYA
+         ========================= */
+
       if (!markerSaya) {
 
-        markerSaya = L.marker(
-          [lat, lon],
-          { icon: iconS }
-        ).addTo(map);
+        markerSaya =
+          L.marker(
+            [lat, lon],
+            { icon: iconS }
+          ).addTo(map);
 
         markerSaya.bindPopup(
           "<b>SAYA</b><br>Posisi GPS saat ini"
@@ -490,32 +501,38 @@ function aktifkanGPS() {
       } else {
 
         markerSaya.setLatLng(
-  [lat, lon]
-);
+          [lat, lon]
+        );
 
-// MAP MENGIKUTI POSISI SAYA
-map.setView(
-  [lat, lon],
-  map.getZoom(),
-  {
-    animate: false
-  }
-);
+        /* MAP MENGIKUTI POSISI SAYA */
 
-if (!circleAkurasi) {
+        map.setView(
+          [lat, lon],
+          map.getZoom(),
+          {
+            animate: false
+          }
+        );
+      }
+
+
+      /* =========================
+         LINGKARAN AKURASI GPS
+         ========================= */
 
       if (!circleAkurasi) {
 
-        circleAkurasi = L.circle(
-          [lat, lon],
-          {
-            radius: accuracy,
-            color: "#7138e8",
-            fillColor: "#7138e8",
-            fillOpacity: 0.12,
-            weight: 2
-          }
-        ).addTo(map);
+        circleAkurasi =
+          L.circle(
+            [lat, lon],
+            {
+              radius: accuracy,
+              color: "#7138e8",
+              fillColor: "#7138e8",
+              fillOpacity: 0.12,
+              weight: 2
+            }
+          ).addTo(map);
 
       } else {
 
@@ -528,7 +545,14 @@ if (!circleAkurasi) {
         );
       }
 
+
+      /* =========================
+         PERBARUI JARAK
+         ========================= */
+
       perbaruiJarak();
+
+      perbaruiGarisLive();
 
     },
 
@@ -546,6 +570,7 @@ if (!circleAkurasi) {
       maximumAge: 1000,
       timeout: 10000
     }
+
   );
 }
 
