@@ -701,6 +701,8 @@ function aktifkanPilihB() {
   document.getElementById("gpsStatus").textContent =
     "GPS AKTIF";
 }
+  map.on("click", pilihBTitik);
+  
 function tampilkanA() {
 
   document.getElementById("aCoordinate").textContent =
