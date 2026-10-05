@@ -881,6 +881,62 @@ function perbaruiJarak() {
   }
 }
 
+  async function hitungRuteKeB() {
+
+  if (!posisiSaya || !titikB) {
+    return;
+  }
+
+  const url =
+    "https://router.project-osrm.org/route/v1/driving/" +
+    posisiSaya.lon + "," +
+    posisiSaya.lat + ";" +
+    titikB.lon + "," +
+    titikB.lat +
+    "?overview=full&geometries=geojson";
+
+  try {
+
+    const response =
+      await fetch(url);
+
+    const data =
+      await response.json();
+
+    if (
+      !data.routes ||
+      !data.routes.length
+    ) {
+      return;
+    }
+
+    if (ruteTujuan) {
+      map.removeLayer(ruteTujuan);
+      ruteTujuan = null;
+    }
+
+    ruteTujuan =
+      L.geoJSON(
+        data.routes[0].geometry,
+        {
+          style: {
+            color: "#7B2FF7",
+            weight: 6,
+            opacity: 0.9,
+            lineCap: "round",
+            lineJoin: "round"
+          }
+        }
+      ).addTo(map);
+
+  } catch (error) {
+
+    console.error(
+      "Gagal menghitung rute:",
+      error
+    );
+  }
+}
   let garisLive = null;
 
 function perbaruiGarisLive() {
