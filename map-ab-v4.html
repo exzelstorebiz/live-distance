@@ -907,6 +907,11 @@ function perbaruiJarak() {
       return;
     }
 
+    if (garisRute) {
+  map.removeLayer(garisRute);
+  garisRute = null;
+}
+    
     if (ruteTujuan) {
       map.removeLayer(ruteTujuan);
       ruteTujuan = null;
