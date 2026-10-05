@@ -490,9 +490,19 @@ function aktifkanGPS() {
       } else {
 
         markerSaya.setLatLng(
-          [lat, lon]
-        );
-      }
+  [lat, lon]
+);
+
+// MAP MENGIKUTI POSISI SAYA
+map.setView(
+  [lat, lon],
+  map.getZoom(),
+  {
+    animate: false
+  }
+);
+
+if (!circleAkurasi) {
 
       if (!circleAkurasi) {
 
