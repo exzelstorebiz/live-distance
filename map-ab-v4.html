@@ -743,7 +743,109 @@ function tampilkanB() {
     " | Lon: " +
     titikB.lon.toFixed(7);
 }
+async function cariAlamatTujuan() {
 
+  const input =
+    document.getElementById("alamatTujuan");
+
+  const alamat =
+    input.value.trim();
+
+  if (!alamat) {
+
+    alert(
+      "Silakan ketik alamat tujuan terlebih dahulu."
+    );
+
+    return;
+  }
+
+  const tombol =
+    document.getElementById("btnCariTujuan");
+
+  tombol.disabled = true;
+  tombol.textContent = "🔎 MENCARI...";
+
+  try {
+
+    const url =
+      "https://nominatim.openstreetmap.org/search" +
+      "?q=" +
+      encodeURIComponent(alamat) +
+      "&format=jsonv2" +
+      "&limit=1" +
+      "&countrycodes=id";
+
+    const response =
+      await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(
+        "Gagal menghubungi layanan pencarian."
+      );
+    }
+
+    const hasil =
+      await response.json();
+
+    if (!hasil.length) {
+
+      alert(
+        "Alamat tujuan tidak ditemukan."
+      );
+
+      return;
+    }
+
+    const lokasi =
+      hasil[0];
+
+    titikB = {
+      lat: parseFloat(lokasi.lat),
+      lon: parseFloat(lokasi.lon)
+    };
+
+    if (markerB) {
+      map.removeLayer(markerB);
+      markerB = null;
+    }
+
+    markerB =
+      L.marker(
+        [titikB.lat, titikB.lon],
+        { icon: iconB }
+      ).addTo(map);
+
+    markerB.bindPopup(
+      "<b>TITIK B</b><br>" +
+      (lokasi.display_name || "Tujuan")
+    );
+
+    tampilkanB();
+
+    map.setView(
+      [titikB.lat, titikB.lon],
+      17
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Gagal mencari alamat:",
+      error
+    );
+
+    alert(
+      "Pencarian alamat gagal. Silakan coba lagi."
+    );
+
+  } finally {
+
+    tombol.disabled = false;
+    tombol.textContent = "🔎 CARI TUJUAN";
+  }
+}
+  
 function jarakMeter(lat1, lon1, lat2, lon2) {
 
   const R = 6371000;
