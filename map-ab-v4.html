@@ -436,6 +436,23 @@ let ruteBelumDilalui = null;
 let jarakRuteTotal = null;
 let jarakRuteSisa = null;
 let ikutiPosisiSaya = true;
+
+  function kembaliKePosisiSaya() {
+
+  if (!posisiSaya) {
+    return;
+  }
+
+  ikutiPosisiSaya = true;
+
+  map.setView(
+    [posisiSaya.lat, posisiSaya.lon],
+    map.getZoom(),
+    {
+      animate: true
+    }
+  );
+}
   
 function buatIcon(className, text) {
   return L.divIcon({
