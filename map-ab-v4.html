@@ -541,14 +541,17 @@ function aktifkanGPS() {
 
         /* MAP MENGIKUTI POSISI SAYA */
 
-        map.setView(
-          [lat, lon],
-          map.getZoom(),
-          {
-            animate: false
-          }
-        );
-      }
+if (ikutiPosisiSaya) {
+
+  map.setView(
+    [lat, lon],
+    map.getZoom(),
+    {
+      animate: false
+    }
+  );
+
+}
 
 
       /* =========================
