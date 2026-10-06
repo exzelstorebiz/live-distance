@@ -730,6 +730,11 @@ function aktifkanPilihB() {
     "GPS AKTIF";
 }
   map.on("click", pilihBTitik);
+  map.on("dragstart", function() {
+
+  ikutiPosisiSaya = false;
+
+});
   
 function tampilkanA() {
 
