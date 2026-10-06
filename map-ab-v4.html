@@ -1193,6 +1193,24 @@ jarakRuteTotal =
       ).addTo(map);
   }
 }
+
+  function tampilkanJarakRute() {
+
+  if (jarakRuteTotal === null) {
+    return;
+  }
+
+  const elemen =
+    document.getElementById("distanceAB");
+
+  if (!elemen) {
+    return;
+  }
+
+  elemen.textContent =
+    formatJarak(jarakRuteTotal);
+}
+  
   let garisLive = null;
 
 function perbaruiGarisLive() {
