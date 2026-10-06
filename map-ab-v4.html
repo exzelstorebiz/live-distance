@@ -250,7 +250,7 @@ button {
 <body>
 
 <div class="header">
-  <h1>NAVIGASI GAWEAN DEWEK !</h1>
+  <h1>NAVIGASI LIVE!</h1>
   <p>A + SAYA + B</p>
 </div>
 
@@ -827,10 +827,14 @@ async function cariAlamatTujuan() {
 
     tampilkanB();
 
-    map.setView(
-      [titikB.lat, titikB.lon],
-      17
-    );
+perbaruiJarak();
+
+hitungRuteKeB();
+
+map.setView(
+  [titikB.lat, titikB.lon],
+  17
+);
 
   } catch (error) {
 
