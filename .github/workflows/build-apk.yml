@@ -11,39 +11,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Ambil kode repositori
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Siapkan Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Siapkan Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
 
-       - name: Siapkan Platform Android
-  run: |
-    export ANDROID_HOME="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
-    echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
-    yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses
-    "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
-      "platforms;android-35" \
-      "build-tools;35.0.0"
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Siapkan proyek aplikasi
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Prepare Capacitor project
         run: |
           mkdir -p apk-project/www
           cp map-ab-v4.html apk-project/www/index.html
           cd apk-project
-
           npm init -y
           npm install @capacitor/core@7 @capacitor/android@7
           npm install --save-dev @capacitor/cli@7
-
           cat > capacitor.config.json <<'EOF'
           {
             "appId": "id.velora.navigasi",
@@ -51,16 +47,15 @@ jobs:
             "webDir": "www"
           }
           EOF
-
           npx cap add android
 
-      - name: Bangun APK
+      - name: Build debug APK
         run: |
           cd apk-project/android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: Simpan APK untuk diunduh
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: navigasi-velora-debug-apk
