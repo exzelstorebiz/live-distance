@@ -25,11 +25,14 @@ jobs:
           distribution: temurin
           java-version: 21
 
-       - name: Siapkan Android SDK
-         run: echo "ANDROID_HOME=$ANDROID_HOME"
-
-      - name: Siapkan Platform Android
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+       - name: Siapkan Platform Android
+  run: |
+    export ANDROID_HOME="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+    echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+    yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses
+    "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+      "platforms;android-35" \
+      "build-tools;35.0.0"
 
       - name: Siapkan proyek aplikasi
         run: |
