@@ -207,7 +207,7 @@ let ruteAsli = []; // Menyimpan koordinat rute yang dikunci
 let isOffRoute = false;
 
 // ================= ICONS (SVG) =================
-// Ikon Mobil Futuristik (Violet & Oranye)
+// 1. Ikon Mobil Futuristik (Violet & Oranye)
 const iconSaya = L.divIcon({
   className: "",
   html: `
@@ -238,22 +238,19 @@ const iconSaya = L.divIcon({
   iconAnchor: [25, 25]
 });
 
-// Ikon Pin Tujuan Baru (Oranye dengan Cincin)
+// 2. Ikon Pin Tujuan Baru (Oranye Bersih)
 const iconTujuan = L.divIcon({
   className: "",
   html: `
-    <div style="position:relative; width:48px; height:48px;">
-      <!-- Cincin Bawah -->
-      <div style="position:absolute; bottom:-5px; left:50%; transform:translateX(-50%); width:30px; height:15px; background:radial-gradient(ellipse at center, rgba(255,129,0,0.8) 0%, rgba(255,129,0,0) 70%); border-radius:50%;"></div>
-      <!-- Pin Body -->
-      <svg viewBox="0 0 100 120" style="width:100%; height:100%; filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.5));">
+    <div style="position:relative; width:44px; height:44px;">
+      <svg viewBox="0 0 100 120" style="width:100%; height:100%; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.5));">
         <path d="M 50 0 C 22.4 0 0 22.4 0 50 C 0 85 50 120 50 120 C 50 120 100 85 100 50 C 100 22.4 77.6 0 50 0 Z" fill="#ff8100" />
-        <circle cx="50" cy="45" r="18" fill="#ffffff" opacity="0.3"/>
+        <circle cx="50" cy="45" r="20" fill="#ffffff" opacity="0.2"/>
       </svg>
     </div>
   `,
-  iconSize: [48, 48],
-  iconAnchor: [24, 48]
+  iconSize: [44, 44],
+  iconAnchor: [22, 44]
 });
 
 // ================= INIT MAP =================
@@ -406,7 +403,6 @@ function kembaliKePosisiSaya() {
     showToast('Posisi GPS belum tersedia');
   }
 }
-
   // ================= FORM & PARSING LOKASI =================
 function cekFormRencana() {
   const awal = document.getElementById('inputAwal').value;
@@ -550,7 +546,6 @@ function setTujuan(lat, lon, nama) {
 }
 
 // ================= LOGIKA RUTE (KUNCI & DETEKSI) =================
-// Fungsi ini mengecek apakah user keluar jalur atau masih di jalur
 function cekPosisiDiRute() {
   if (!posisiSaya || ruteAsli.length === 0) return;
 
@@ -562,22 +557,20 @@ function cekPosisiDiRute() {
     if (d < jarakMin) { jarakMin = d; idxTerdekat = i; }
   }
 
-  // Toleransi keluar jalur: 50 meter
-  const TOLERANSI = 50;
+  // Toleransi keluar jalur diperkecil menjadi 30 meter agar lebih responsif
+  const TOLERANSI = 30;
 
   if (jarakMin > TOLERANSI) {
-    // JIKA KELUAR JALUR: Hitung rute baru
+    // JIKA KELUAR JALUR
     if (!isOffRoute) {
       isOffRoute = true;
       showToast('Anda keluar jalur. Menghitung rute baru...');
-      hitungRute(true); 
+      hitungRute(true); // Paksa hitung rute baru saat itu juga
     }
   } else {
-    // JIKA MASIH DI JALUR: Hanya potong garis (redup vs neon)
+    // JIKA MASIH DI JALUR
     isOffRoute = false;
     gambarRuteNeon(idxTerdekat);
-    
-    // Update info jarak & waktu
     updateInfoJarakDariIdx(idxTerdekat);
     updateInstruksi(idxTerdekat);
   }
@@ -588,7 +581,6 @@ async function hitungRute(force) {
   if (calcInProgress) return;
 
   const now = Date.now();
-  // Jangan hitung rute jika belum 5 detik (kecuali dipaksa)
   if (!force && now - lastRuteCalc < 5000) return; 
   lastRuteCalc = now;
   calcInProgress = true;
@@ -604,12 +596,13 @@ async function hitungRute(force) {
     if (!data.routes || !data.routes.length) return;
 
     ruteData = data.routes[0];
-    // Simpan rute asli yang dikunci
     ruteAsli = ruteData.geometry.coordinates.map(c => ({ lat: c[1], lon: c[0] }));
     
-    // Paksa gambar ulang dari indeks 0
+    isOffRoute = false; 
+    
     gambarRuteNeon(0);
     updateInfoJarakDariIdx(0);
+    updateInstruksi(0);
   } catch (err) {
     console.error('Route error:', err);
   } finally {
