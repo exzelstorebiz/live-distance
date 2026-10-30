@@ -355,6 +355,7 @@ function updateHeading(lat, lon) {
       const bearing = Math.atan2(dLon * Math.cos(lat * Math.PI / 180), dLat) * 180 / Math.PI;
       heading = (bearing + 360) % 360;
       
+      // Putar div pembungkus gambar
       const mobilEl = document.getElementById('mobilSaya');
       if (mobilEl) {
         mobilEl.style.transform = 'rotate(' + heading + 'deg)';
