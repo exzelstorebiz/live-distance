@@ -9,6 +9,7 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; background: #f4f3f8; color: #202020; overflow: hidden; }
 #map { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+
 .header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
   background: #7138e8; color: white; text-align: center; padding: 8px 10px;
@@ -17,14 +18,13 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 .header h1 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: 1px; }
 .header p { margin: 2px 0 0; font-size: 11px; opacity: .9; }
 
-/* PANEL BAWAH */
 .bottom-panel {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
   background: white; border-radius: 20px 20px 0 0;
   box-shadow: 0 -4px 20px rgba(0,0,0,.15);
-  padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
-  max-height: 55vh; overflow-y: auto;
-  transform: translateY(calc(100% - 130px));
+  padding: 10px 14px calc(12px + env(safe-area-inset-bottom));
+  max-height: 60vh; overflow-y: auto;
+  transform: translateY(calc(100% - 96px));
   transition: transform .3s ease;
 }
 .bottom-panel.open { transform: translateY(0); }
@@ -35,7 +35,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 .row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .status {
   flex: 1; background: #f1eaff; color: #5730a8; border-radius: 12px;
-  padding: 8px 12px; font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px; font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 6px;
 }
 .status-dot { width: 10px; height: 10px; background: #ff8500; border-radius: 50%; flex-shrink: 0; }
 .status-dot.ok { background: #18a84b; }
@@ -43,7 +43,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 .input-row { display: flex; gap: 6px; margin-bottom: 8px; }
 .input-row input {
   flex: 1; padding: 11px 12px; border: 1px solid #ddd; border-radius: 10px;
-  font-size: 14px; outline: none;
+  font-size: 14px; outline: none; min-width: 0;
 }
 .input-row input:focus { border-color: #7138e8; }
 button {
@@ -52,23 +52,20 @@ button {
 }
 button:disabled { opacity: .6; }
 .btn-primary { background: #7138e8; }
-.btn-search { background: #7138e8; }
+.btn-search { background: #7138e8; padding: 11px 14px; }
 
 .info-row { display: flex; gap: 8px; margin-bottom: 8px; }
 .info-box {
   flex: 1; background: #fafafa; border-radius: 10px; padding: 8px 10px;
-  border-left: 4px solid #7138e8;
+  border-left: 4px solid #7138e8; min-width: 0;
 }
 .info-label { color: #777; font-size: 10px; font-weight: 700; }
-.info-value { font-size: 16px; font-weight: 800; margin-top: 2px; }
+.info-value { font-size: 16px; font-weight: 800; margin-top: 2px; word-break: break-word; }
 
 .btn-row { display: flex; gap: 8px; margin-top: 8px; }
 .btn-row button { flex: 1; }
-
 .btn-clear { background: #888; }
-.btn-recenter { background: #7138e8; }
 
-/* PANEL ATAS - navigasi info */
 .top-info {
   position: fixed; top: 48px; left: 12px; right: 12px; z-index: 999;
   background: rgba(255,255,255,.95); border-radius: 14px;
@@ -76,13 +73,12 @@ button:disabled { opacity: .6; }
   display: none;
 }
 .top-info.show { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.top-info .stat { text-align: center; flex: 1; }
+.top-info .stat { text-align: center; flex: 1; min-width: 0; }
 .top-info .stat-label { font-size: 10px; color: #888; font-weight: 700; }
-.top-info .stat-value { font-size: 17px; font-weight: 800; color: #7138e8; }
+.top-info .stat-value { font-size: 16px; font-weight: 800; color: #7138e8; }
 
-/* Tombol kembali ke posisi */
 .btn-recenter-float {
-  position: fixed; right: 14px; bottom: 150px; z-index: 1001;
+  position: fixed; right: 14px; bottom: 110px; z-index: 1001;
   width: 52px; height: 52px; border-radius: 50%;
   background: #7138e8; color: white; border: 3px solid white;
   box-shadow: 0 3px 12px rgba(0,0,0,.3); font-size: 22px;
@@ -91,12 +87,10 @@ button:disabled { opacity: .6; }
 }
 .btn-recenter-float.active { background: #18a84b; }
 
-/* Marker */
 .marker-saya {
   width: 28px; height: 28px; border-radius: 50%;
   background: #7138e8; border: 3px solid white;
   box-shadow: 0 2px 8px rgba(0,0,0,.35);
-  display: flex; align-items: center; justify-content: center;
   position: relative;
 }
 .marker-saya::after {
@@ -110,6 +104,7 @@ button:disabled { opacity: .6; }
   background: #ff8100; border: 3px solid white;
   box-shadow: 0 2px 8px rgba(0,0,0,.35);
   transform: rotate(-45deg);
+  position: relative;
 }
 .marker-tujuan::after {
   content: ''; position: absolute; width: 12px; height: 12px;
@@ -117,15 +112,14 @@ button:disabled { opacity: .6; }
   transform: translate(-50%, -50%);
 }
 
-/* Instructions box */
 .instruction-box {
-  position: fixed; top: 90px; left: 12px; right: 12px; z-index: 999;
+  position: fixed; top: 92px; left: 12px; right: 12px; z-index: 999;
   background: #1e1e2e; color: white; border-radius: 14px;
   padding: 12px 16px; box-shadow: 0 3px 15px rgba(0,0,0,.25);
   display: none;
 }
 .instruction-box.show { display: block; }
-.instruction-box .turn-icon { font-size: 28px; margin-right: 10px; vertical-align: middle; }
+.instruction-box .turn-icon { font-size: 26px; margin-right: 10px; vertical-align: middle; }
 .instruction-box .turn-text { font-size: 16px; font-weight: 700; vertical-align: middle; }
 .instruction-box .turn-dist { font-size: 12px; color: #bbb; margin-top: 4px; }
 
@@ -136,10 +130,10 @@ button:disabled { opacity: .6; }
 .legend-t { background: #ff8100; }
 
 .toast {
-  position: fixed; left: 50%; bottom: 200px; transform: translateX(-50%);
+  position: fixed; left: 50%; bottom: 180px; transform: translateX(-50%);
   background: #333; color: white; padding: 10px 18px; border-radius: 20px;
   font-size: 13px; z-index: 2000; opacity: 0; transition: opacity .3s;
-  pointer-events: none; max-width: 80%; text-align: center;
+  pointer-events: none; max-width: 85%; text-align: center;
 }
 .toast.show { opacity: 1; }
 </style>
@@ -155,7 +149,7 @@ button:disabled { opacity: .6; }
 
 <div class="top-info" id="topInfo">
   <div class="stat">
-    <div class="stat-label">SISA JARAK</div>
+    <div class="stat-label">SISA</div>
     <div class="stat-value" id="sisaJarak">-</div>
   </div>
   <div class="stat">
@@ -174,9 +168,7 @@ button:disabled { opacity: .6; }
   <div class="turn-dist" id="turnDist"></div>
 </div>
 
-<button class="btn-recenter-float active" id="btnRecenter" onclick="kembaliKePosisiSaya()" title="Kembali ke posisi saya">
-  📍
-</button>
+<button class="btn-recenter-float active" id="btnRecenter" onclick="kembaliKePosisiSaya()" title="Kembali ke posisi saya">📍</button>
 
 <div class="bottom-panel" id="bottomPanel">
   <div class="panel-handle" onclick="togglePanel()"></div>
@@ -189,19 +181,19 @@ button:disabled { opacity: .6; }
   </div>
 
   <div class="input-row">
-    <input type="text" id="alamatTujuan" placeholder="Ketik / tempel lokasi tujuan (bisa dari WhatsApp)">
+    <input type="text" id="alamatTujuan" placeholder="Ketik / tempel lokasi tujuan">
     <button class="btn-search" id="btnCariTujuan" onclick="cariAlamatTujuan()">🔎</button>
   </div>
 
   <div class="input-row">
     <button class="btn-primary" style="flex:1" onclick="aktifkanPilihTujuan()">🗺️ PILIH DI PETA</button>
-    <button class="btn-primary" style="flex:1" onclick="tempelDariClipboard()">📋 TEMPEL LOKASI</button>
+    <button class="btn-primary" style="flex:1" onclick="tempelDariClipboard()">📋 TEMPEL</button>
   </div>
 
   <div class="info-row">
     <div class="info-box">
       <div class="info-label">TUJUAN</div>
-      <div class="info-value" id="tujuanNama" style="font-size:12px; word-break:break-word;">Belum ditentukan</div>
+      <div class="info-value" id="tujuanNama" style="font-size:12px;">Belum ditentukan</div>
     </div>
   </div>
 
@@ -241,41 +233,38 @@ button:disabled { opacity: .6; }
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ============ STATE ============
+// ================= STATE =================
 let map;
 let posisiSaya = null;
 let titikTujuan = null;
-let heading = 0; // arah hadap perangkat (derajat, 0 = utara)
-let rotasiPeta = 0; // rotasi map agar perjalanan selalu ke atas
-let followMode = true; // posisi saya selalu di tengah
+let heading = 0;
+let followMode = true;
 let modePilihTujuan = false;
 
 let markerSaya = null;
 let markerTujuan = null;
 let circleAkurasi = null;
 let ruteLayer = null;
-let ruteData = null; // data route dari OSRM
-let ruteCoordinates = []; // array {lat,lng}
+let ruteData = null;
+let ruteCoordinates = [];
 
 let watchId = null;
-let lastRuteCalc = null;
+let lastRuteCalc = 0;
+let calcInProgress = false;
+let lastPosForHeading = null;
+let lastHeadingTime = 0;
 
-// ============ MAP INIT ============
+// ================= MAP INIT =================
 map = L.map("map", {
   zoomControl: false,
-  attributionControl: false,
-  rotate: true,
-  touchRotate: false,
-  rotateControl: false
+  attributionControl: false
 }).setView([-6.387, 106.936], 17);
 
-// plugin rotate tidak ada di CDN standar, kita pakai CSS transform manual
-// fallback: gunakan layer pane rotation via CSS
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19
 }).addTo(map);
 
-// ============ ICONS ============
+// ================= ICONS =================
 const iconSaya = L.divIcon({
   className: "",
   html: '<div class="marker-saya"></div>',
@@ -290,21 +279,21 @@ const iconTujuan = L.divIcon({
   iconAnchor: [18, 36]
 });
 
-// ============ TOAST ============
-function showToast(msg, duration = 2500) {
+// ================= TOAST =================
+function showToast(msg, duration) {
+  duration = duration || 2500;
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), duration);
+  t._timer = setTimeout(function(){ t.classList.remove('show'); }, duration);
 }
 
-// ============ PANEL TOGGLE ============
 function togglePanel() {
   document.getElementById('bottomPanel').classList.toggle('open');
 }
 
-// ============ GPS ============
+// ================= GPS =================
 function mulaiGPS() {
   if (!navigator.geolocation) {
     setStatus('GPS TIDAK DIDUKUNG', false);
@@ -328,7 +317,7 @@ function onPosition(position) {
   const lon = position.coords.longitude;
   const acc = position.coords.accuracy;
 
-  posisiSaya = { lat, lon, accuracy: acc };
+  posisiSaya = { lat: lat, lon: lon, accuracy: acc };
   setStatus('GPS AKTIF', true);
 
   document.getElementById('latitude').textContent = lat.toFixed(7);
@@ -336,14 +325,12 @@ function onPosition(position) {
   document.getElementById('accuracy').textContent = '± ' + Math.round(acc) + ' m';
   document.getElementById('updateTime').textContent = new Date().toLocaleTimeString('id-ID');
 
-  // marker saya
   if (!markerSaya) {
     markerSaya = L.marker([lat, lon], { icon: iconSaya, zIndexOffset: 1000 }).addTo(map);
   } else {
     markerSaya.setLatLng([lat, lon]);
   }
 
-  // circle akurasi
   if (!circleAkurasi) {
     circleAkurasi = L.circle([lat, lon], {
       radius: acc, color: '#7138e8', fillColor: '#7138e8',
@@ -354,13 +341,12 @@ function onPosition(position) {
     circleAkurasi.setRadius(acc);
   }
 
-  // hitung heading dari gerakan (jika ada posisi sebelumnya)
   updateHeading(lat, lon);
 
-  // update rute
-  perbaruiRute();
+  if (titikTujuan) {
+    hitungRute();
+  }
 
-  // posisi selalu di tengah jika follow mode
   if (followMode) {
     centerOnMe();
   }
@@ -371,80 +357,90 @@ function onPositionError(err) {
   setStatus('GPS ERROR', false);
 }
 
-// ============ HEADING DARI GERAKAN ============
-let lastPosForHeading = null;
-let lastHeadingTime = 0;
-
+// ================= HEADING DARI GERAKAN =================
 function updateHeading(lat, lon) {
   const now = Date.now();
   if (lastPosForHeading && now - lastHeadingTime > 800) {
     const dLat = lat - lastPosForHeading.lat;
     const dLon = lon - lastPosForHeading.lon;
     const dist = Math.sqrt(dLat * dLat + dLon * dLon);
-    // hanya update heading jika bergerak cukup jauh (> 3 meter)
     if (dist > 0.00003) {
-      const bearing = Math.atan2(dLon * Math.cos(lat * Math.PI / 180), dLat) * 180 / Math.PI;
+      const bearing = Math.atan2(
+        dLon * Math.cos(lat * Math.PI / 180),
+        dLat
+      ) * 180 / Math.PI;
       heading = (bearing + 360) % 360;
-      lastPosForHeading = { lat, lon };
+      lastPosForHeading = { lat: lat, lon: lon };
       lastHeadingTime = now;
-      if (followMode && ruteCoordinates.length > 0) {
-        centerOnMe();
-      }
     }
   } else if (!lastPosForHeading) {
-    lastPosForHeading = { lat, lon };
+    lastPosForHeading = { lat: lat, lon: lon };
     lastHeadingTime = now;
   }
 }
 
-// ============ ROTASI PETA ============
-// Peta diputar agar arah perjalanan (heading) selalu ke atas.
-// Karena Leaflet tidak support rotate, kita pakai CSS transform pada map container
-// dengan pendekatan: container dirotate, lalu di-counter-rotate marker/label.
-// Namun CSS rotate akan memutar semua overlay termasuk marker.
-// Solusi: gunakan div khusus yang dirotasi dan marker di-counter-rotate.
-
-// Untuk simplisitas dan stabilitas, kita gunakan pendekatan:
-// - Rotasi hanya pada map pane (tile layer) menggunakan transform
-// - Marker diposisikan ulang setiap rotasi via CSS counter-rotate
-
-let mapPaneRotated = null;
-
+// ================= ROTASI PETA (perjalanan selalu ke atas) =================
+// Peta diputar agar arah gerak (heading) selalu menghadap ke atas.
 function applyRotation(deg) {
-  // Rotasi diterapkan ke container tile pane via CSS
-  // Kita gunakan properti transform pada .leaflet-map-pane
-  const pane = map.getPanes().mapPane;
-  if (!pane) return;
-  // Simpan rotasi
-  rotasiPeta = deg;
-  // Counter-rotate markers
+  const mapPane = map.getPanes().mapPane;
+  if (!mapPane) return;
+
+  // Rotasi seluruh map pane
+  mapPane.style.transform = 'rotate(' + (-deg) + 'deg)';
+  mapPane.style.transformOrigin = 'center center';
+
+  // Counter-rotate marker pane & shadow pane agar marker tetap tegak
   const markerPane = map.getPanes().markerPane;
   const shadowPane = map.getPanes().shadowPane;
-  const overlayPane = map.getPanes().overlayPane;
-
-  // Rotasi semua pane kecuali marker (marker akan di-counter)
-  // Sebenarnya paling mudah: rotasi seluruh map-pane, lalu counter-rotate marker
-  pane.style.transform = `rotate(${-deg}deg)`;
-  pane.style.transformOrigin = 'center center';
-
   if (markerPane) {
-    markerPane.style.transform = `rotate(${deg}deg)`;
+    markerPane.style.transform = 'rotate(' + deg + 'deg)';
     markerPane.style.transformOrigin = 'center center';
   }
   if (shadowPane) {
-    shadowPane.style.transform = `rotate(${deg}deg)`;
+    shadowPane.style.transform = 'rotate(' + deg + 'deg)';
     shadowPane.style.transformOrigin = 'center center';
   }
 }
 
 function centerOnMe() {
   if (!posisiSaya) return;
-  const target = map.getZoom();
-  // Rotasi berdasarkan heading
-  const rotDeg = heading;
-  applyRotation(rotDeg);
-  map.setView([posisiSaya.lat, posisiSaya.lon], target, { animate: false });
+
+  // Tentukan heading untuk rotasi:
+  // prioritaskan arah segmen rute di depan, fallback ke heading GPS
+  let rotasiTarget = heading;
+  if (ruteCoordinates.length > 1) {
+    const aheadBearing = getBearingAhead();
+    if (aheadBearing !== null) rotasiTarget = aheadBearing;
+  }
+
+  applyRotation(rotasiTarget);
+  map.setView([posisiSaya.lat, posisiSaya.lon], map.getZoom(), { animate: false });
   document.getElementById('btnRecenter').classList.add('active');
+}
+
+function getBearingAhead() {
+  if (!posisiSaya || ruteCoordinates.length < 2) return null;
+
+  // cari titik terdekat pada rute
+  let idx = 0;
+  let min = Infinity;
+  for (let i = 0; i < ruteCoordinates.length; i++) {
+    const d = jarakMeter(posisiSaya.lat, posisiSaya.lon, ruteCoordinates[i].lat, ruteCoordinates[i].lon);
+    if (d < min) { min = d; idx = i; }
+  }
+
+  const aheadIdx = Math.min(idx + 8, ruteCoordinates.length - 1);
+  if (aheadIdx <= idx) return null;
+
+  const p1 = ruteCoordinates[idx];
+  const p2 = ruteCoordinates[aheadIdx];
+  const dLat = p2.lat - p1.lat;
+  const dLon = p2.lon - p1.lon;
+  const bearing = Math.atan2(
+    dLon * Math.cos(p1.lat * Math.PI / 180),
+    dLat
+  ) * 180 / Math.PI;
+  return (bearing + 360) % 360;
 }
 
 function kembaliKePosisiSaya() {
@@ -457,13 +453,57 @@ function kembaliKePosisiSaya() {
   }
 }
 
-// saat map digeser manual -> follow mode off
+// geser peta manual -> matikan follow
 map.on('dragstart', function() {
   followMode = false;
   document.getElementById('btnRecenter').classList.remove('active');
 });
 
-// ============ CARI ALAMAT ============
+// ================= PARSING SHARE LOKASI (WhatsApp dll) =================
+function parseShareLocation(text) {
+  // format "lat, lon" atau "lat lon"
+  let m = text.match(/(-?\d{1,3}\.\d+)[,\s]+(-?\d{1,3}\.\d+)/);
+  if (m) {
+    const a = parseFloat(m[1]);
+    const b = parseFloat(m[2]);
+    if (a >= -90 && a <= 90 && b >= -180 && b <= 180) {
+      return { lat: a, lon: b };
+    }
+  }
+  // format URL dengan @lat,lon
+  m = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (m) {
+    return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+  }
+  // format ?q=lat,lon atau &ll=lat,lon
+  m = text.match(/[?&](?:q|query|ll|center)=(-?\d+\.\d+)[,%20]+(-?\d+\.\d+)/);
+  if (m) {
+    return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+  }
+  // format geo:lat,lon
+  m = text.match(/geo:(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (m) {
+    return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+  }
+  return null;
+}
+
+// resolve google maps short link (best effort)
+async function resolveGoogleMapsLink(url) {
+  try {
+    const res = await fetch(url, { redirect: 'follow', mode: 'cors' });
+    const finalUrl = res.url || url;
+    const m = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) ||
+              finalUrl.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/) ||
+              finalUrl.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+  } catch (e) {
+    // CORS gagal - tidak bisa auto, user harus tempel koordinat
+  }
+  return null;
+}
+
+// ================= CARI ALAMAT =================
 async function cariAlamatTujuan() {
   const input = document.getElementById('alamatTujuan');
   const raw = input.value.trim();
@@ -477,27 +517,25 @@ async function cariAlamatTujuan() {
   btn.textContent = '⏳';
 
   try {
-    // deteksi koordinat / link share
+    // 1. cek apakah koordinat / share location
     const parsed = parseShareLocation(raw);
     if (parsed) {
       setTujuan(parsed.lat, parsed.lon, 'Lokasi dari share');
-      btn.disabled = false;
-      btn.textContent = '🔎';
       return;
     }
 
-    // deteksi Google Maps link -> coba ekstrak
+    // 2. cek google maps link
     if (raw.includes('google.com/maps') || raw.includes('goo.gl/maps') || raw.includes('maps.app.goo.gl')) {
       const extracted = await resolveGoogleMapsLink(raw);
       if (extracted) {
         setTujuan(extracted.lat, extracted.lon, 'Lokasi dari Google Maps');
-        btn.disabled = false;
-        btn.textContent = '🔎';
         return;
       }
+      showToast('Link Google Maps tidak bisa dibaca otomatis. Buka link, lalu tempel koordinat lat,lon.');
+      return;
     }
 
-    // nominatim search
+    // 3. nominatim search alamat
     const url = 'https://nominatim.openstreetmap.org/search?q=' +
       encodeURIComponent(raw) + '&format=jsonv2&limit=1&countrycodes=id';
     const res = await fetch(url, { headers: { 'Accept-Language': 'id' } });
@@ -517,46 +555,6 @@ async function cariAlamatTujuan() {
   }
 }
 
-// parse berbagai format share lokasi
-function parseShareLocation(text) {
-  // format: "lat, lon" atau "lat lon"
-  let m = text.match(/(-?\d{1,3}\.\d+)[,\s]+(-?\d{1,3}\.\d+)/);
-  if (m) {
-    const a = parseFloat(m[1]);
-    const b = parseFloat(m[2]);
-    if (a >= -90 && a <= 90 && b >= -180 && b <= 180) {
-      return { lat: a, lon: b };
-    }
-  }
-  // format: "geo:lat,lon" atau "?q=lat,lon"
-  m = text.match(/(?:q|query|ll|center)=(-?\d+\.\d+)[,%20]+(-?\d+\.\d+)/);
-  if (m) {
-    return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
-  }
-  // format: koordinat dalam URL @lat,lon
-  m = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-  if (m) {
-    return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
-  }
-  return null;
-}
-
-// resolve google maps short link via fetch (CORS mungkin gagal, fallback null)
-async function resolveGoogleMapsLink(url) {
-  try {
-    // coba fetch redirect - sering CORS block, jadi ini best-effort
-    const res = await fetch(url, { redirect: 'follow', mode: 'cors' });
-    const finalUrl = res.url || url;
-    const m = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) ||
-              finalUrl.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/) ||
-              finalUrl.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
-  } catch (e) {
-    // CORS gagal, coba buka via link - user manual
-  }
-  return null;
-}
-
 // tempel dari clipboard (untuk share WhatsApp)
 async function tempelDariClipboard() {
   try {
@@ -566,16 +564,15 @@ async function tempelDariClipboard() {
       return;
     }
     document.getElementById('alamatTujuan').value = text;
-    // otomatis cari
     cariAlamatTujuan();
   } catch (err) {
     showToast('Tidak bisa akses clipboard. Tempel manual di kolom.');
   }
 }
 
-// ============ SET TUJUAN ============
+// ================= SET TUJUAN =================
 function setTujuan(lat, lon, nama) {
-  titikTujuan = { lat, lon, nama: nama || 'Tujuan' };
+  titikTujuan = { lat: lat, lon: lon, nama: nama || 'Tujuan' };
 
   if (markerTujuan) map.removeLayer(markerTujuan);
   markerTujuan = L.marker([lat, lon], { icon: iconTujuan }).addTo(map);
@@ -584,21 +581,23 @@ function setTujuan(lat, lon, nama) {
   document.getElementById('topInfo').classList.add('show');
   document.getElementById('instructionBox').classList.add('show');
 
-  // hitung rute
-  hitungRute();
+  hitungRute(true);
 
-  // zoom ke tujuan sebentar lalu kembali ke saya
   if (posisiSaya) {
-    const bounds = L.latLngBounds([[posisiSaya.lat, posisiSaya.lon], [lat, lon]]);
+    const bounds = L.latLngBounds([
+      [posisiSaya.lat, posisiSaya.lon],
+      [lat, lon]
+    ]);
     map.fitBounds(bounds, { padding: [60, 60] });
-    setTimeout(() => {
+    showToast('Tujuan ditetapkan. Kembali ke posisi saya...');
+    setTimeout(function() {
       followMode = true;
       centerOnMe();
     }, 1500);
   }
 }
 
-// ============ PILIH TUJUAN DI PETA ============
+// ================= PILIH TUJUAN DI PETA =================
 function aktifkanPilihTujuan() {
   modePilihTujuan = true;
   setStatus('KETUK PETA UNTUK TUJUAN', false);
@@ -613,16 +612,13 @@ map.on('click', function(e) {
   setStatus('GPS AKTIF', true);
 });
 
-// ============ HITUNG RUTE (OSRM) ============
-let lastCalcTime = 0;
-let calcInProgress = false;
-
-async function hitungRute() {
+// ================= HITUNG RUTE (OSRM) =================
+async function hitungRute(force) {
   if (!posisiSaya || !titikTujuan) return;
   if (calcInProgress) return;
 
   const now = Date.now();
-  if (lastRuteCalc && now - lastRuteCalc < 5000) return; // throttle 5 detik
+  if (!force && now - lastRuteCalc < 5000) return;
   lastRuteCalc = now;
   calcInProgress = true;
 
@@ -637,11 +633,16 @@ async function hitungRute() {
     if (!data.routes || !data.routes.length) return;
 
     ruteData = data.routes[0];
-    ruteCoordinates = ruteData.geometry.coordinates.map(c => ({ lat: c[1], lon: c[0] }));
+    ruteCoordinates = ruteData.geometry.coordinates.map(function(c) {
+      return { lat: c[1], lon: c[0] };
+    });
 
     tampilkanRute();
     updateInfoJarak();
     updateInstruksi();
+
+    // update rotasi peta kalau follow mode
+    if (followMode) centerOnMe();
   } catch (err) {
     console.error('Route error:', err);
   } finally {
@@ -649,22 +650,11 @@ async function hitungRute() {
   }
 }
 
-function perbaruiRute() {
-  // dipanggil tiap update GPS
-  if (titikTujuan && posisiSaya) {
-    hitungRute();
-    if (ruteCoordinates.length > 0) {
-      updateInfoJarak();
-      updateInstruksi();
-    }
-  }
-}
-
 function tampilkanRute() {
   if (ruteLayer) map.removeLayer(ruteLayer);
   if (!ruteCoordinates.length) return;
 
-  const latlngs = ruteCoordinates.map(c => [c.lat, c.lon]);
+  const latlngs = ruteCoordinates.map(function(c) { return [c.lat, c.lon]; });
   ruteLayer = L.polyline(latlngs, {
     color: '#7138e8',
     weight: 7,
@@ -674,11 +664,10 @@ function tampilkanRute() {
   }).addTo(map);
 }
 
-// ============ INFO JARAK & INSTRUKSI ============
+// ================= INFO JARAK & INSTRUKSI =================
 function updateInfoJarak() {
-  if (!posisiSaya || !ruteData) return;
+  if (!posisiSaya || !ruteData || !ruteCoordinates.length) return;
 
-  // cari titik terdekat pada rute
   let idxTerdekat = 0;
   let jarakMin = Infinity;
   for (let i = 0; i < ruteCoordinates.length; i++) {
@@ -686,7 +675,6 @@ function updateInfoJarak() {
     if (d < jarakMin) { jarakMin = d; idxTerdekat = i; }
   }
 
-  // hitung sisa jarak dari titik terdekat
   let sisa = 0;
   for (let i = idxTerdekat; i < ruteCoordinates.length - 1; i++) {
     sisa += jarakMeter(
@@ -712,12 +700,21 @@ function updateInstruksi() {
   const steps = ruteData.legs[0].steps;
   if (!steps || !steps.length) return;
 
-  // cari titik terdekat
+  // cari titik terdekat pada rute
   let idxTerdekat = 0;
   let jarakMin = Infinity;
   for (let i = 0; i < ruteCoordinates.length; i++) {
     const d = jarakMeter(posisiSaya.lat, posisiSaya.lon, ruteCoordinates[i].lat, ruteCoordinates[i].lon);
     if (d < jarakMin) { jarakMin = d; idxTerdekat = i; }
+  }
+
+  // jarak kumulatif sampai titik terdekat
+  let jarakKeIdx = 0;
+  for (let i = 0; i < idxTerdekat; i++) {
+    jarakKeIdx += jarakMeter(
+      ruteCoordinates[i].lat, ruteCoordinates[i].lon,
+      ruteCoordinates[i + 1].lat, ruteCoordinates[i + 1].lon
+    );
   }
 
   // cari step yang sedang dilalui
@@ -728,9 +725,9 @@ function updateInstruksi() {
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     const stepDist = step.distance;
-    if (akumulasi + stepDist >= jarakTotalKeIndex(idxTerdekat)) {
+    if (akumulasi + stepDist >= jarakKeIdx) {
       currentStep = step;
-      distToNextTurn = (akumulasi + stepDist) - jarakTotalKeIndex(idxTerdekat);
+      distToNextTurn = (akumulasi + stepDist) - jarakKeIdx;
       break;
     }
     akumulasi += stepDist;
@@ -744,13 +741,13 @@ function updateInstruksi() {
   let text = 'Lurus';
 
   if (type === 'turn') {
-    if (modifier.includes('left')) { icon = '⬅️'; text = 'Belok Kiri'; }
-    else if (modifier.includes('right')) { icon = '➡️'; text = 'Belok Kanan'; }
-    else if (modifier.includes('slight left')) { icon = '↖️'; text = 'Agak Kiri'; }
-    else if (modifier.includes('slight right')) { icon = '↗️'; text = 'Agak Kanan'; }
-    else if (modifier.includes('sharp left')) { icon = '⬅️'; text = 'Tajam Kiri'; }
-    else if (modifier.includes('sharp right')) { icon = '➡️'; text = 'Tajam Kanan'; }
-    else if (modifier.includes('uturn')) { icon = '🔄'; text = 'Putar Balik'; }
+    if (modifier.indexOf('slight left') >= 0) { icon = '↖️'; text = 'Agak Kiri'; }
+    else if (modifier.indexOf('slight right') >= 0) { icon = '↗️'; text = 'Agak Kanan'; }
+    else if (modifier.indexOf('sharp left') >= 0) { icon = '⬅️'; text = 'Tajam Kiri'; }
+    else if (modifier.indexOf('sharp right') >= 0) { icon = '➡️'; text = 'Tajam Kanan'; }
+    else if (modifier.indexOf('left') >= 0) { icon = '⬅️'; text = 'Belok Kiri'; }
+    else if (modifier.indexOf('right') >= 0) { icon = '➡️'; text = 'Belok Kanan'; }
+    else if (modifier.indexOf('uturn') >= 0) { icon = '🔄'; text = 'Putar Balik'; }
   } else if (type === 'arrive') {
     icon = '🏁'; text = 'Tiba di Tujuan';
   } else if (type === 'depart') {
@@ -758,18 +755,18 @@ function updateInstruksi() {
   } else if (type === 'roundabout' || type === 'rotary') {
     icon = '🔄'; text = 'Bundaran';
   } else if (type === 'merge') {
-    icon = '↗️'; text = 'Gabung';
+    icon = '↗️'; text = 'Gabung Jalan';
   } else if (type === 'fork') {
     icon = '↗️'; text = 'Percabangan';
+  } else if (type === 'end of road') {
+    icon = '⬆️'; text = 'Akhir Jalan';
   }
 
   document.getElementById('turnIcon').textContent = icon;
   document.getElementById('turnText').textContent = text;
   document.getElementById('turnDist').textContent =
     distToNextTurn > 0 ? formatJarak(distToNextTurn) + ' lagi' : '';
+}
 
-  // update heading target untuk rotasi peta
-  // heading diambil dari arah segmen rute di depan (bukan dari GPS bergerak saja)
-  const aheadIdx = Math.min(idxTerdekat + 5, ruteCoordinates.length - 1);
-  if (aheadIdx > idxTerdekat) {
-    const p1
+// ================= UTIL JARAK =================
+function jarakMeter(lat1, lon1, lat2, lon2)
