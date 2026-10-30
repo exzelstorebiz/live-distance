@@ -142,7 +142,12 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
   <div id="map"></div>
 
   <div class="panel-atas">
-    <button class="btn-batal" onclick="batalPerjalanan()">✖</button>
+    <button class="btn-batal" onclick="batalPerjalanan()" style="background: transparent; width: 36px; height: 36px; padding: 0; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+  <svg viewBox="0 0 100 120" style="width: 32px; height: 32px; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));">
+    <path d="M 50 0 C 22.4 0 0 22.4 0 50 C 0 85 50 120 50 120 C 50 120 100 85 100 50 C 100 22.4 77.6 0 50 0 Z" fill="#ff8100" />
+    <circle cx="50" cy="45" r="20" fill="#ffffff" opacity="0.2"/>
+  </svg>
+</button>
     <div class="tujuan-text">
       <div id="tujuanNama">Tujuan</div>
       <span class="status-gps" id="gpsStatus">MENCARI GPS...</span>
