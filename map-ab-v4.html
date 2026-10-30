@@ -8,131 +8,102 @@
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; background: #f4f3f8; color: #202020; overflow: hidden; }
-#map { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
 
-.header {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-  background: #7138e8; color: white; text-align: center; padding: 8px 10px;
+/* ================= HALAMAN 1: PERENCANAAN ================= */
+#halamanRencana {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: #f4f3f8; z-index: 2000; display: flex; flex-direction: column;
+}
+.header-rencana {
+  background: #7138e8; color: white; padding: 20px 15px; text-align: center;
   box-shadow: 0 2px 8px rgba(0,0,0,.2);
 }
-.header h1 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: 1px; }
-.header p { margin: 2px 0 0; font-size: 11px; opacity: .9; }
+.header-rencana h1 { margin: 0; font-size: 20px; font-weight: 800; }
+.header-rencana p { margin: 5px 0 0; font-size: 12px; opacity: .9; }
 
-.bottom-panel {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000;
-  background: white; border-radius: 20px 20px 0 0;
-  box-shadow: 0 -4px 20px rgba(0,0,0,.15);
-  padding: 10px 14px calc(12px + env(safe-area-inset-bottom));
-  max-height: 60vh; overflow-y: auto;
-  transform: translateY(calc(100% - 96px));
-  transition: transform .3s ease;
+.form-container { padding: 20px; flex: 1; overflow-y: auto; }
+.form-group { margin-bottom: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+.form-group label { display: block; font-size: 12px; font-weight: 700; color: #7138e8; margin-bottom: 8px; }
+.form-group input {
+  width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;
+  font-size: 14px; outline: none; margin-bottom: 10px;
 }
-.bottom-panel.open { transform: translateY(0); }
-.panel-handle {
-  width: 50px; height: 5px; background: #ddd; border-radius: 3px;
-  margin: 0 auto 10px; cursor: pointer;
+.form-group input:focus { border-color: #7138e8; }
+.form-group input[readonly] { background: #f9f9f9; color: #666; }
+.btn-group { display: flex; gap: 8px; }
+.btn-group button {
+  flex: 1; padding: 10px; border: 0; border-radius: 8px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
 }
-.row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.status {
-  flex: 1; background: #f1eaff; color: #5730a8; border-radius: 12px;
-  padding: 8px 12px; font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 6px;
-}
-.status-dot { width: 10px; height: 10px; background: #ff8500; border-radius: 50%; flex-shrink: 0; }
-.status-dot.ok { background: #18a84b; }
+.btn-wa { background: #25D366; color: white; }
+.btn-peta { background: #7138e8; color: white; }
 
-.input-row { display: flex; gap: 6px; margin-bottom: 8px; }
-.input-row input {
-  flex: 1; padding: 11px 12px; border: 1px solid #ddd; border-radius: 10px;
-  font-size: 14px; outline: none; min-width: 0;
+.btn-mulai {
+  display: block; width: calc(100% - 40px); margin: 20px; padding: 16px;
+  background: #7138e8; color: white; border: 0; border-radius: 12px;
+  font-size: 16px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 4px 15px rgba(113, 56, 232, 0.4);
 }
-.input-row input:focus { border-color: #7138e8; }
-button {
-  border: 0; border-radius: 10px; padding: 11px 14px; color: white;
-  font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+.btn-mulai:disabled { background: #aaa; box-shadow: none; }
+
+/* ================= HALAMAN 2: NAVIGASI ================= */
+#halamanNavigasi { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 1000; }
+#map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+
+.panel-atas {
+  position: fixed; top: 10px; left: 10px; right: 10px; z-index: 1000;
+  background: rgba(30, 30, 46, 0.95); color: white; border-radius: 12px;
+  padding: 10px 15px; display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,.3);
 }
-button:disabled { opacity: .6; }
-.btn-primary { background: #7138e8; }
-.btn-search { background: #7138e8; padding: 11px 14px; }
-
-.info-row { display: flex; gap: 8px; margin-bottom: 8px; }
-.info-box {
-  flex: 1; background: #fafafa; border-radius: 10px; padding: 8px 10px;
-  border-left: 4px solid #7138e8; min-width: 0;
-}
-.info-label { color: #777; font-size: 10px; font-weight: 700; }
-.info-value { font-size: 16px; font-weight: 800; margin-top: 2px; word-break: break-word; }
-
-.btn-row { display: flex; gap: 8px; margin-top: 8px; }
-.btn-row button { flex: 1; }
-.btn-clear { background: #888; }
-
-.top-info {
-  position: fixed; top: 48px; left: 12px; right: 12px; z-index: 999;
-  background: rgba(255,255,255,.95); border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.12); padding: 8px 12px;
-  display: none;
-}
-.top-info.show { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.top-info .stat { text-align: center; flex: 1; min-width: 0; }
-.top-info .stat-label { font-size: 10px; color: #888; font-weight: 700; }
-.top-info .stat-value { font-size: 16px; font-weight: 800; color: #7138e8; }
-
-.btn-recenter-float {
-  position: fixed; right: 14px; bottom: 110px; z-index: 1001;
-  width: 52px; height: 52px; border-radius: 50%;
-  background: #7138e8; color: white; border: 3px solid white;
-  box-shadow: 0 3px 12px rgba(0,0,0,.3); font-size: 22px;
+.btn-batal {
+  background: #ff3b30; color: white; border: 0; border-radius: 8px;
+  width: 36px; height: 36px; font-size: 18px; font-weight: bold; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; padding: 0;
 }
-.btn-recenter-float.active { background: #18a84b; }
+.tujuan-text { flex: 1; font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status-gps { font-size: 10px; color: #18a84b; font-weight: bold; display: block; margin-top: 2px;}
 
-.marker-saya {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: #7138e8; border: 3px solid white;
-  box-shadow: 0 2px 8px rgba(0,0,0,.35);
-  position: relative;
+.instruksi-box {
+  position: fixed; top: 70px; left: 10px; right: 10px; z-index: 999;
+  background: #1e1e2e; color: white; border-radius: 12px;
+  padding: 12px 15px; box-shadow: 0 3px 15px rgba(0,0,0,.25);
+  display: flex; align-items: center; gap: 15px;
 }
-.marker-saya::after {
-  content: ''; position: absolute; width: 0; height: 0;
-  border-left: 6px solid transparent; border-right: 6px solid transparent;
-  border-bottom: 10px solid white;
-  top: -8px; left: 50%; transform: translateX(-50%);
+.instruksi-icon { font-size: 30px; }
+.instruksi-text { font-size: 16px; font-weight: 800; }
+.instruksi-dist { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+.panel-bawah {
+  position: fixed; bottom: 15px; left: 10px; right: 10px; z-index: 1000;
+  background: white; border-radius: 16px; padding: 15px;
+  box-shadow: 0 -4px 20px rgba(0,0,0,.15);
+  display: flex; justify-content: space-between; align-items: center;
 }
-.marker-tujuan {
-  width: 36px; height: 36px; border-radius: 50% 50% 50% 0;
-  background: #ff8100; border: 3px solid white;
-  box-shadow: 0 2px 8px rgba(0,0,0,.35);
-  transform: rotate(-45deg);
-  position: relative;
-}
-.marker-tujuan::after {
-  content: ''; position: absolute; width: 12px; height: 12px;
-  background: white; border-radius: 50%; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
+.info-box { text-align: center; flex: 1; }
+.info-label { font-size: 10px; color: #888; font-weight: 700; text-transform: uppercase; }
+.info-value { font-size: 18px; font-weight: 800; color: #7138e8; margin-top: 2px; }
+
+.btn-recenter {
+  position: fixed; right: 15px; bottom: 100px; z-index: 1000;
+  width: 50px; height: 50px; border-radius: 50%;
+  background: #18a84b; color: white; border: 3px solid white;
+  box-shadow: 0 3px 10px rgba(0,0,0,.3); font-size: 22px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
 
-.instruction-box {
-  position: fixed; top: 92px; left: 12px; right: 12px; z-index: 999;
-  background: #1e1e2e; color: white; border-radius: 14px;
-  padding: 12px 16px; box-shadow: 0 3px 15px rgba(0,0,0,.25);
-  display: none;
+/* ================= IKON & TOAST ================= */
+.marker-mobil {
+  width: 45px; height: 45px;
+  filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.4));
+  transition: transform 0.5s linear;
 }
-.instruction-box.show { display: block; }
-.instruction-box .turn-icon { font-size: 26px; margin-right: 10px; vertical-align: middle; }
-.instruction-box .turn-text { font-size: 16px; font-weight: 700; vertical-align: middle; }
-.instruction-box .turn-dist { font-size: 12px; color: #bbb; margin-top: 4px; }
-
-.legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; font-size: 11px; font-weight: 700; color: #555; }
-.legend span { display: inline-flex; align-items: center; gap: 4px; }
-.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-.legend-s { background: #7138e8; }
-.legend-t { background: #ff8100; }
+.marker-mobil svg { width: 100%; height: 100%; }
 
 .toast {
-  position: fixed; left: 50%; bottom: 180px; transform: translateX(-50%);
+  position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%);
   background: #333; color: white; padding: 10px 18px; border-radius: 20px;
-  font-size: 13px; z-index: 2000; opacity: 0; transition: opacity .3s;
+  font-size: 13px; z-index: 3000; opacity: 0; transition: opacity .3s;
   pointer-events: none; max-width: 85%; text-align: center;
 }
 .toast.show { opacity: 1; }
@@ -140,92 +111,67 @@ button:disabled { opacity: .6; }
 </head>
 <body>
 
-<div id="map"></div>
+<!-- ================= HALAMAN 1: RENCANA ================= -->
+<div id="halamanRencana">
+  <div class="header-rencana">
+    <h1>NAVIGASI LIVE</h1>
+    <p>Atur Perjalanan Anda</p>
+  </div>
+  
+  <div class="form-container">
+    <div class="form-group">
+      <label>📍 TITIK AWAL (Posisi Saat Ini)</label>
+      <input type="text" id="inputAwal" readonly value="Mencari GPS...">
+    </div>
 
-<div class="header">
-  <h1>NAVIGASI LIVE</h1>
-  <p>Tujuan Perjalanan</p>
+    <div class="form-group">
+      <label>🎯 TITIK TUJUAN</label>
+      <input type="text" id="inputTujuan" placeholder="Ketik alamat atau tempel link...">
+      <div class="btn-group">
+        <button class="btn-wa" onclick="tempelWA()">📋 Tempel WA</button>
+        <button class="btn-peta" onclick="pilihDiPeta()">🗺️ Pilih di Peta</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-mulai" id="btnMulai" onclick="mulaiPerjalanan()" disabled>🚀 MULAI PERJALANAN</button>
 </div>
 
-<div class="top-info" id="topInfo">
-  <div class="stat">
-    <div class="stat-label">SISA</div>
-    <div class="stat-value" id="sisaJarak">-</div>
-  </div>
-  <div class="stat">
-    <div class="stat-label">ESTIMASI</div>
-    <div class="stat-value" id="estimasi">-</div>
-  </div>
-  <div class="stat">
-    <div class="stat-label">TOTAL</div>
-    <div class="stat-value" id="totalJarak">-</div>
-  </div>
-</div>
+<!-- ================= HALAMAN 2: NAVIGASI ================= -->
+<div id="halamanNavigasi">
+  <div id="map"></div>
 
-<div class="instruction-box" id="instructionBox">
-  <span class="turn-icon" id="turnIcon">⬆️</span>
-  <span class="turn-text" id="turnText">Lurus</span>
-  <div class="turn-dist" id="turnDist"></div>
-</div>
-
-<button class="btn-recenter-float active" id="btnRecenter" onclick="kembaliKePosisiSaya()" title="Kembali ke posisi saya">📍</button>
-
-<div class="bottom-panel" id="bottomPanel">
-  <div class="panel-handle" onclick="togglePanel()"></div>
-
-  <div class="row">
-    <div class="status">
-      <span class="status-dot" id="statusDot"></span>
-      <span id="gpsStatus">MENCARI GPS...</span>
+  <div class="panel-atas">
+    <button class="btn-batal" onclick="batalPerjalanan()">✖</button>
+    <div class="tujuan-text">
+      <div id="tujuanNama">Tujuan</div>
+      <span class="status-gps" id="gpsStatus">MENCARI GPS...</span>
     </div>
   </div>
 
-  <div class="input-row">
-    <input type="text" id="alamatTujuan" placeholder="Ketik / tempel lokasi tujuan">
-    <button class="btn-search" id="btnCariTujuan" onclick="cariAlamatTujuan()">🔎</button>
-  </div>
-
-  <div class="input-row">
-    <button class="btn-primary" style="flex:1" onclick="aktifkanPilihTujuan()">🗺️ PILIH DI PETA</button>
-    <button class="btn-primary" style="flex:1" onclick="tempelDariClipboard()">📋 TEMPEL</button>
-  </div>
-
-  <div class="info-row">
-    <div class="info-box">
-      <div class="info-label">TUJUAN</div>
-      <div class="info-value" id="tujuanNama" style="font-size:12px;">Belum ditentukan</div>
+  <div class="instruksi-box" id="instruksiBox" style="display:none;">
+    <div class="instruksi-icon" id="turnIcon">⬆️</div>
+    <div>
+      <div class="instruksi-text" id="turnText">Lurus</div>
+      <div class="instruksi-dist" id="turnDist">-</div>
     </div>
   </div>
 
-  <div class="info-row">
+  <button class="btn-recenter" id="btnRecenter" onclick="kembaliKePosisiSaya()">📍</button>
+
+  <div class="panel-bawah">
     <div class="info-box">
-      <div class="info-label">LATITUDE</div>
-      <div class="info-value" id="latitude" style="font-size:13px;">-</div>
+      <div class="info-label">Sisa Jarak</div>
+      <div class="info-value" id="sisaJarak">-</div>
+    </div>
+    <div class="info-box" style="border-left: 1px solid #eee; border-right: 1px solid #eee;">
+      <div class="info-label">Waktu Tempuh</div>
+      <div class="info-value" id="estimasiWaktu">-</div>
     </div>
     <div class="info-box">
-      <div class="info-label">LONGITUDE</div>
-      <div class="info-value" id="longitude" style="font-size:13px;">-</div>
+      <div class="info-label">Tiba Pukul</div>
+      <div class="info-value" id="jamTiba">-</div>
     </div>
-  </div>
-
-  <div class="info-row">
-    <div class="info-box">
-      <div class="info-label">AKURASI</div>
-      <div class="info-value" id="accuracy" style="font-size:14px;">-</div>
-    </div>
-    <div class="info-box">
-      <div class="info-label">UPDATE</div>
-      <div class="info-value" id="updateTime" style="font-size:14px;">-</div>
-    </div>
-  </div>
-
-  <div class="legend">
-    <span><i class="legend-dot legend-s"></i> Posisi Saya</span>
-    <span><i class="legend-dot legend-t"></i> Tujuan</span>
-  </div>
-
-  <div class="btn-row">
-    <button class="btn-clear" onclick="hapusTujuan()">🗑️ HAPUS TUJUAN</button>
   </div>
 </div>
 
@@ -233,505 +179,5 @@ button:disabled { opacity: .6; }
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ================= STATE =================
-let map;
-let posisiSaya = null;
-let titikTujuan = null;
-let followMode = true;
-let modePilihTujuan = false;
-
-let markerSaya = null;
-let markerTujuan = null;
-let circleAkurasi = null;
-let ruteLayer = null;
-let ruteData = null;
-let ruteCoordinates = [];
-
-let watchId = null;
-let lastRuteCalc = 0;
-let calcInProgress = false;
-
-// ================= MAP INIT =================
-function initMap() {
-  map = L.map("map", {
-    zoomControl: false,
-    attributionControl: false
-  }).setView([-6.387, 106.936], 16);
-
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19
-  }).addTo(map);
-
-  L.control.zoom({ position: 'topright' }).addTo(map);
-
-  // Event drag map untuk mematikan mode follow
-  map.on('dragstart', function() {
-    followMode = false;
-    document.getElementById('btnRecenter').classList.remove('active');
-  });
-
-  // Event klik map untuk pilih tujuan
-  map.on('click', function(e) {
-    if (!modePilihTujuan) return;
-    modePilihTujuan = false;
-    setTujuan(e.latlng.lat, e.latlng.lng, 'Titik dipilih di peta');
-    setStatus('GPS AKTIF', true);
-  });
-}
-
-// ================= ICONS =================
-const iconSaya = L.divIcon({
-  className: "",
-  html: '<div class="marker-saya"></div>',
-  iconSize: [28, 28],
-  iconAnchor: [14, 14]
-});
-
-const iconTujuan = L.divIcon({
-  className: "",
-  html: '<div class="marker-tujuan"></div>',
-  iconSize: [36, 36],
-  iconAnchor: [18, 36]
-});
-
-// ================= TOAST & UI =================
-function showToast(msg, duration) {
-  duration = duration || 2500;
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(function(){ t.classList.remove('show'); }, duration);
-}
-
-function togglePanel() {
-  document.getElementById('bottomPanel').classList.toggle('open');
-}
-
-function setStatus(text, ok) {
-  document.getElementById('gpsStatus').textContent = text;
-  document.getElementById('statusDot').classList.toggle('ok', ok);
-}
-
-// ================= GPS =================
-function mulaiGPS() {
-  if (!navigator.geolocation) {
-    setStatus('GPS TIDAK DIDUKUNG', false);
-    return;
-  }
-  setStatus('MENCARI POSISI...', false);
-  watchId = navigator.geolocation.watchPosition(
-    onPosition,
-    onPositionError,
-    { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
-  );
-}
-
-function onPosition(position) {
-  const lat = position.coords.latitude;
-  const lon = position.coords.longitude;
-  const acc = position.coords.accuracy;
-
-  posisiSaya = { lat: lat, lon: lon, accuracy: acc };
-  setStatus('GPS AKTIF', true);
-
-  document.getElementById('latitude').textContent = lat.toFixed(7);
-  document.getElementById('longitude').textContent = lon.toFixed(7);
-  document.getElementById('accuracy').textContent = '± ' + Math.round(acc) + ' m';
-  document.getElementById('updateTime').textContent = new Date().toLocaleTimeString('id-ID');
-
-  if (!markerSaya) {
-    markerSaya = L.marker([lat, lon], { icon: iconSaya, zIndexOffset: 1000 }).addTo(map);
-  } else {
-    markerSaya.setLatLng([lat, lon]);
-  }
-
-  if (!circleAkurasi) {
-    circleAkurasi = L.circle([lat, lon], {
-      radius: acc, color: '#7138e8', fillColor: '#7138e8',
-      fillOpacity: 0.1, weight: 1
-    }).addTo(map);
-  } else {
-    circleAkurasi.setLatLng([lat, lon]);
-    circleAkurasi.setRadius(acc);
-  }
-
-  if (titikTujuan) {
-    hitungRute();
-  }
-
-  if (followMode) {
-    centerOnMe();
-  }
-}
-
-function onPositionError(err) {
-  console.warn(err);
-  let msg = 'GPS ERROR';
-  if (err.code === 1) msg = 'IZIN GPS DITOLAK';
-  else if (err.code === 2) msg = 'GPS TIDAK TERSEDIA';
-  else if (err.code === 3) msg = 'GPS TIMEOUT';
-  setStatus(msg, false);
-}
-
-function centerOnMe() {
-  if (!posisiSaya) return;
-  map.setView([posisiSaya.lat, posisiSaya.lon], map.getZoom(), { animate: true });
-  document.getElementById('btnRecenter').classList.add('active');
-}
-
-function kembaliKePosisiSaya() {
-  followMode = true;
-  document.getElementById('btnRecenter').classList.add('active');
-  if (posisiSaya) {
-    centerOnMe();
-  } else {
-    showToast('Posisi GPS belum tersedia');
-  }
-}
-
-// ================= PARSING & PENCARIAN LOKASI =================
-function parseShareLocation(text) {
-  let m = text.match(/(-?\d{1,3}\.\d+)[,\s]+(-?\d{1,3}\.\d+)/);
-  if (m) {
-    const a = parseFloat(m[1]);
-    const b = parseFloat(m[2]);
-    if (a >= -90 && a <= 90 && b >= -180 && b <= 180) {
-      return { lat: a, lon: b };
-    }
-  }
-  m = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-  if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+// Kode JavaScript akan dikirim di Bagian 2
   
-  m = text.match(/[?&](?:q|query|ll|center)=(-?\d+\.\d+)[,%20]+(-?\d+\.\d+)/);
-  if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
-  
-  m = text.match(/geo:(-?\d+\.\d+),(-?\d+\.\d+)/);
-  if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
-  
-  return null;
-}
-
-async function resolveGoogleMapsLink(url) {
-  try {
-    const res = await fetch(url, { redirect: 'follow', mode: 'cors' });
-    const finalUrl = res.url || url;
-    const m = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) ||
-              finalUrl.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/) ||
-              finalUrl.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
-  } catch (e) {
-    // CORS gagal
-  }
-  return null;
-}
-
-async function cariAlamatTujuan() {
-  const input = document.getElementById('alamatTujuan');
-  const raw = input.value.trim();
-  if (!raw) {
-    showToast('Ketik alamat atau tempel link lokasi');
-    return;
-  }
-
-  const btn = document.getElementById('btnCariTujuan');
-  btn.disabled = true;
-  btn.textContent = '⏳';
-
-  try {
-    const parsed = parseShareLocation(raw);
-    if (parsed) {
-      setTujuan(parsed.lat, parsed.lon, 'Lokasi dari share');
-      return;
-    }
-
-    if (raw.includes('google.com/maps') || raw.includes('goo.gl/maps') || raw.includes('maps.app.goo.gl')) {
-      const extracted = await resolveGoogleMapsLink(raw);
-      if (extracted) {
-        setTujuan(extracted.lat, extracted.lon, 'Lokasi dari Google Maps');
-        return;
-      }
-      showToast('Link Google Maps tidak bisa dibaca otomatis. Buka link, lalu tempel koordinat lat,lon.');
-      return;
-    }
-
-    const url = 'https://nominatim.openstreetmap.org/search?q=' +
-      encodeURIComponent(raw) + '&format=jsonv2&limit=1&countrycodes=id';
-    const res = await fetch(url, { headers: { 'Accept-Language': 'id' } });
-    const data = await res.json();
-    
-    if (!data.length) {
-      showToast('Lokasi tidak ditemukan');
-      return;
-    }
-    const loc = data[0];
-    setTujuan(parseFloat(loc.lat), parseFloat(loc.lon), loc.display_name || 'Tujuan');
-  } catch (err) {
-    console.error(err);
-    showToast('Pencarian gagal, coba lagi');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '🔎';
-  }
-}
-
-async function tempelDariClipboard() {
-  try {
-    const text = await navigator.clipboard.readText();
-    if (!text) {
-      showToast('Clipboard kosong');
-      return;
-    }
-    document.getElementById('alamatTujuan').value = text;
-    cariAlamatTujuan();
-  } catch (err) {
-    showToast('Tidak bisa akses clipboard. Tempel manual di kolom.');
-  }
-}
-
-// ================= SET TUJUAN =================
-function setTujuan(lat, lon, nama) {
-  titikTujuan = { lat: lat, lon: lon, nama: nama || 'Tujuan' };
-
-  if (markerTujuan) map.removeLayer(markerTujuan);
-  markerTujuan = L.marker([lat, lon], { icon: iconTujuan }).addTo(map);
-
-  document.getElementById('tujuanNama').textContent = nama || (lat.toFixed(5) + ', ' + lon.toFixed(5));
-  document.getElementById('topInfo').classList.add('show');
-  document.getElementById('instructionBox').classList.add('show');
-
-  hitungRute(true);
-
-  if (posisiSaya) {
-    const bounds = L.latLngBounds([
-      [posisiSaya.lat, posisiSaya.lon],
-      [lat, lon]
-    ]);
-    map.fitBounds(bounds, { padding: [60, 60] });
-    showToast('Tujuan ditetapkan. Kembali ke posisi saya...');
-    setTimeout(function() {
-      followMode = true;
-      centerOnMe();
-    }, 1500);
-  }
-}
-
-function aktifkanPilihTujuan() {
-  modePilihTujuan = true;
-  setStatus('KETUK PETA UNTUK TUJUAN', false);
-  showToast('Ketuk lokasi tujuan di peta', 3000);
-  document.getElementById('bottomPanel').classList.remove('open');
-}
-
-function hapusTujuan() {
-  titikTujuan = null;
-  ruteData = null;
-  ruteCoordinates = [];
-
-  if (markerTujuan) {
-    map.removeLayer(markerTujuan);
-    markerTujuan = null;
-  }
-  if (ruteLayer) {
-    map.removeLayer(ruteLayer);
-    ruteLayer = null;
-  }
-
-  document.getElementById('tujuanNama').textContent = 'Belum ditentukan';
-  document.getElementById('topInfo').classList.remove('show');
-  document.getElementById('instructionBox').classList.remove('show');
-  document.getElementById('sisaJarak').textContent = '-';
-  document.getElementById('estimasi').textContent = '-';
-  document.getElementById('totalJarak').textContent = '-';
-  document.getElementById('alamatTujuan').value = '';
-
-  showToast('Tujuan dihapus');
-}
-
-// ================= HITUNG RUTE =================
-async function hitungRute(force) {
-  if (!posisiSaya || !titikTujuan) return;
-  if (calcInProgress) return;
-
-  const now = Date.now();
-  if (!force && now - lastRuteCalc < 5000) return;
-  lastRuteCalc = now;
-  calcInProgress = true;
-
-  const url = 'https://router.project-osrm.org/route/v1/driving/' +
-    posisiSaya.lon + ',' + posisiSaya.lat + ';' +
-    titikTujuan.lon + ',' + titikTujuan.lat +
-    '?overview=full&geometries=geojson&steps=true';
-
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!data.routes || !data.routes.length) return;
-
-    ruteData = data.routes[0];
-    ruteCoordinates = ruteData.geometry.coordinates.map(function(c) {
-      return { lat: c[1], lon: c[0] };
-    });
-
-    tampilkanRute();
-    updateInfoJarak();
-    updateInstruksi();
-  } catch (err) {
-    console.error('Route error:', err);
-  } finally {
-    calcInProgress = false;
-  }
-}
-
-function tampilkanRute() {
-  if (ruteLayer) map.removeLayer(ruteLayer);
-  if (!ruteCoordinates.length) return;
-
-  const latlngs = ruteCoordinates.map(function(c) { return [c.lat, c.lon]; });
-  ruteLayer = L.polyline(latlngs, {
-    color: '#7138e8',
-    weight: 7,
-    opacity: 0.85,
-    lineCap: 'round',
-    lineJoin: 'round'
-  }).addTo(map);
-}
-
-function updateInfoJarak() {
-  if (!posisiSaya || !ruteData || !ruteCoordinates.length) return;
-
-  let idxTerdekat = 0;
-  let jarakMin = Infinity;
-  for (let i = 0; i < ruteCoordinates.length; i++) {
-    const d = jarakMeter(posisiSaya.lat, posisiSaya.lon, ruteCoordinates[i].lat, ruteCoordinates[i].lon);
-    if (d < jarakMin) { jarakMin = d; idxTerdekat = i; }
-  }
-
-  let sisa = 0;
-  for (let i = idxTerdekat; i < ruteCoordinates.length - 1; i++) {
-    sisa += jarakMeter(
-      ruteCoordinates[i].lat, ruteCoordinates[i].lon,
-      ruteCoordinates[i + 1].lat, ruteCoordinates[i + 1].lon
-    );
-  }
-
-  document.getElementById('sisaJarak').textContent = formatJarak(sisa);
-  document.getElementById('totalJarak').textContent = formatJarak(ruteData.distance);
-
-  const detik = sisa / (30000 / 3600);
-  const menit = Math.round(detik / 60);
-  document.getElementById('estimasi').textContent = menit < 60
-    ? menit + ' mnt'
-    : Math.floor(menit / 60) + ' j ' + (menit % 60) + ' m';
-}
-
-function updateInstruksi() {
-  if (!posisiSaya || !ruteData || !ruteData.legs || !ruteData.legs[0]) return;
-  const steps = ruteData.legs[0].steps;
-  if (!steps || !steps.length) return;
-
-  let idxTerdekat = 0;
-  let jarakMin = Infinity;
-  for (let i = 0; i < ruteCoordinates.length; i++) {
-    const d = jarakMeter(posisiSaya.lat, posisiSaya.lon, ruteCoordinates[i].lat, ruteCoordinates[i].lon);
-    if (d < jarakMin) { jarakMin = d; idxTerdekat = i; }
-  }
-
-  let jarakKeIdx = 0;
-  for (let i = 0; i < idxTerdekat; i++) {
-    jarakKeIdx += jarakMeter(
-      ruteCoordinates[i].lat, ruteCoordinates[i].lon,
-      ruteCoordinates[i + 1].lat, ruteCoordinates[i + 1].lon
-    );
-  }
-
-  let akumulasi = 0;
-  let currentStep = steps[0];
-  let distToNextTurn = 0;
-
-  for (let i = 0; i < steps.length; i++) {
-    const step = steps[i];
-    const stepDist = step.distance;
-    if (akumulasi + stepDist >= jarakKeIdx) {
-      currentStep = step;
-      distToNextTurn = (akumulasi + stepDist) - jarakKeIdx;
-      break;
-    }
-    akumulasi += stepDist;
-  }
-
-  const maneuver = currentStep.maneuver || {};
-  const type = maneuver.type || 'continue';
-  const modifier = maneuver.modifier || '';
-
-  let icon = '⬆️';
-  let text = 'Lurus';
-
-  if (type === 'turn') {
-    if (modifier.indexOf('slight left') >= 0) { icon = '↖️'; text = 'Agak Kiri'; }
-    else if (modifier.indexOf('slight right') >= 0) { icon = '↗️'; text = 'Agak Kanan'; }
-    else if (modifier.indexOf('sharp left') >= 0) { icon = '⬅️'; text = 'Tajam Kiri'; }
-    else if (modifier.indexOf('sharp right') >= 0) { icon = '➡️'; text = 'Tajam Kanan'; }
-    else if (modifier.indexOf('left') >= 0) { icon = '⬅️'; text = 'Belok Kiri'; }
-    else if (modifier.indexOf('right') >= 0) { icon = '➡️'; text = 'Belok Kanan'; }
-    else if (modifier.indexOf('uturn') >= 0) { icon = '🔄'; text = 'Putar Balik'; }
-  } else if (type === 'arrive') {
-    icon = '🏁'; text = 'Tiba di Tujuan';
-  } else if (type === 'depart') {
-    icon = '🚀'; text = 'Mulai Perjalanan';
-  } else if (type === 'roundabout' || type === 'rotary') {
-    icon = '🔄'; text = 'Bundaran';
-  } else if (type === 'merge') {
-    icon = '↗️'; text = 'Gabung Jalan';
-  } else if (type === 'fork') {
-    icon = '↗️'; text = 'Percabangan';
-  } else if (type === 'end of road') {
-    icon = '⬆️'; text = 'Akhir Jalan';
-  }
-
-  document.getElementById('turnIcon').textContent = icon;
-  document.getElementById('turnText').textContent = text;
-  document.getElementById('turnDist').textContent =
-    distToNextTurn > 0 ? formatJarak(distToNextTurn) + ' lagi' : '';
-}
-
-// ================= UTIL JARAK =================
-function jarakMeter(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-function formatJarak(meter) {
-  if (meter < 1000) return Math.round(meter) + ' m';
-  return (meter / 1000).toFixed(1) + ' km';
-}
-
-// ================= INIT APLIKASI =================
-document.addEventListener('DOMContentLoaded', function() {
-  initMap();
-  mulaiGPS();
-  
-  document.getElementById('alamatTujuan').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      cariAlamatTujuan();
-    }
-  });
-
-  if (!navigator.clipboard || !navigator.clipboard.readText) {
-    const btns = document.querySelectorAll('button');
-    btns.forEach(function(b) {
-      if (b.textContent.indexOf('TEMPEL') >= 0) b.style.display = 'none';
-    });
-  }
-});
-</script>
-</body>
-</html>
