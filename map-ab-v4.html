@@ -208,10 +208,15 @@ let isOffRoute = false;
 
 // ================= ICONS (SVG) =================
 // Ikon Mobil Futuristik (Violet & Oranye)
-const iconSaya = L.icon({
-  iconUrl: 'mobil.png',   // Memanggil file gambar Anda
-  iconSize: [65, 65],     // Mengubah ukuran gambar menjadi 45x45 pixel di layar
-  iconAnchor: [22.5, 22.5] // Titik tengah gambar (setengah dari iconSize)
+const iconSaya = L.divIcon({
+  className: "", // Kosongkan class bawaan Leaflet
+  html: `
+    <div id="mobilSaya" style="width: 65px; height: 65px; transition: transform 0.3s linear; transform-origin: center center;">
+      <img src="mobil.png" style="width: 100%; height: 100%; object-fit: contain;">
+    </div>
+  `,
+  iconSize: [65, 65],
+  iconAnchor: [22.5, 22.5]
 });
 
 // Ikon Pin Tujuan Baru (Oranye dengan Cincin)
