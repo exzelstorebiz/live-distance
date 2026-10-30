@@ -179,5 +179,211 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// Kode JavaScript akan dikirim di Bagian 2
+// ================= STATE =================
+let map;
+let posisiSaya = null;
+let titikTujuan = null;
+let followMode = true;
+let modePilihTujuan = false;
+let heading = 0;
+
+let markerSaya = null;
+let markerTujuan = null;
+let circleAkurasi = null;
+
+// Layer untuk Rute
+let ruteLayerLewat = null; 
+let ruteLayerSisa = null;  
+let ruteLayerGlow = null;  
+
+let ruteData = null;
+let ruteCoordinates = [];
+let watchId = null;
+let lastRuteCalc = 0;
+let calcInProgress = false;
+
+// ================= ICONS =================
+// Ikon Mobil Warna Putih dengan Aksen Violet & Oranye
+const iconSaya = L.divIcon({
+  className: "",
+  html: `
+    <div class="marker-mobil" id="mobilSaya">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <rect x="25" y="10" width="50" height="80" rx="15" fill="#ffffff" stroke="#cccccc" stroke-width="2"/>
+        <path d="M 30 25 Q 50 15 70 25 L 70 35 Q 50 30 30 35 Z" fill="#333333" opacity="0.8"/>
+        <path d="M 30 75 Q 50 85 70 75 L 70 65 Q 50 70 30 65 Z" fill="#333333" opacity="0.8"/>
+        <rect x="45" y="10" width="10" height="20" fill="#7138e8" />
+        <rect x="45" y="40" width="10" height="30" fill="#ff8100" />
+        <rect x="27" y="12" width="10" height="4" rx="2" fill="#fffaaa" />
+        <rect x="63" y="12" width="10" height="4" rx="2" fill="#fffaaa" />
+        <rect x="15" y="30" width="10" height="5" rx="2" fill="#ffffff" stroke="#cccccc" stroke-width="1"/>
+        <rect x="75" y="30" width="10" height="5" rx="2" fill="#ffffff" stroke="#cccccc" stroke-width="1"/>
+      </svg>
+    </div>
+  `,
+  iconSize: [45, 45],
+  iconAnchor: [22.5, 22.5]
+});
+
+const iconTujuan = L.divIcon({
+  className: "",
+  html: '<div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:#ff8100;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.35);transform:rotate(-45deg);position:relative;"><div style="position:absolute;width:12px;height:12px;background:white;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);"></div></div>',
+  iconSize: [36, 36],
+  iconAnchor: [18, 36]
+});
+
+// ================= INIT MAP =================
+function initMap() {
+  map = L.map("map", {
+    zoomControl: false,
+    attributionControl: false
+  }).setView([-6.387, 106.936], 16);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19
+  }).addTo(map);
+
+  L.control.zoom({ position: 'topright' }).addTo(map);
+
+  // Event saat peta digeser manual
+  map.on('dragstart', function() {
+    followMode = false;
+    const btn = document.getElementById('btnRecenter');
+    if (btn) btn.style.background = '#7138e8'; // Berubah ungu
+  });
+
+  // Event klik peta (untuk fitur Pilih di Peta)
+  map.on('click', function(e) {
+    if (!modePilihTujuan) return;
+    modePilihTujuan = false;
+    
+    // Kembali ke halaman rencana
+    document.getElementById('halamanNavigasi').style.display = 'none';
+    document.getElementById('halamanRencana').style.display = 'flex';
+    
+    // Isi input tujuan dengan koordinat yang diklik
+    const lat = e.latlng.lat;
+    const lon = e.latlng.lng;
+    document.getElementById('inputTujuan').value = lat.toFixed(6) + ', ' + lon.toFixed(6);
+    
+    showToast('Lokasi tujuan dipilih dari peta');
+    cekFormRencana();
+  });
+}
+
+// ================= GPS & UPDATE POSISI =================
+function mulaiGPS() {
+  if (!navigator.geolocation) {
+    showToast('Browser tidak mendukung GPS');
+    return;
+  }
+  
+  watchId = navigator.geolocation.watchPosition(
+    onPosition,
+    onPositionError,
+    { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
+  );
+}
+
+function onPosition(position) {
+  const lat = position.coords.latitude;
+  const lon = position.coords.longitude;
+  const acc = position.coords.accuracy;
+
+  posisiSaya = { lat: lat, lon: lon, accuracy: acc };
+  
+  // Update status di panel atas
+  document.getElementById('gpsStatus').textContent = 'GPS AKTIF (Akurasi: ' + Math.round(acc) + 'm)';
+  document.getElementById('gpsStatus').style.color = '#18a84b';
+
+  // Update input awal di halaman rencana (jika halaman rencana sedang terbuka)
+  const inputAwal = document.getElementById('inputAwal');
+  if (inputAwal && document.getElementById('halamanRencana').style.display !== 'none') {
+    inputAwal.value = lat.toFixed(6) + ', ' + lon.toFixed(6);
+    cekFormRencana();
+  }
+
+  // Update Marker & Akurasi
+  if (!markerSaya) {
+    markerSaya = L.marker([lat, lon], { icon: iconSaya, zIndexOffset: 1000 }).addTo(map);
+  } else {
+    markerSaya.setLatLng([lat, lon]);
+  }
+
+  if (!circleAkurasi) {
+    circleAkurasi = L.circle([lat, lon], {
+      radius: acc, color: '#7138e8', fillColor: '#7138e8',
+      fillOpacity: 0.1, weight: 1
+    }).addTo(map);
+  } else {
+    circleAkurasi.setLatLng([lat, lon]);
+    circleAkurasi.setRadius(acc);
+  }
+
+  // Update heading (arah putar mobil)
+  updateHeading(lat, lon);
+
+  // Hitung rute jika sedang dalam perjalanan
+  if (titikTujuan && document.getElementById('halamanNavigasi').style.display === 'block') {
+    hitungRute();
+  }
+
+  // Kunci peta di tengah jika followMode aktif
+  if (followMode) {
+    map.setView([lat, lon], map.getZoom(), { animate: true, duration: 1.0 });
+  }
+}
+
+function onPositionError(err) {
+  console.warn(err);
+  const statusEl = document.getElementById('gpsStatus');
+  statusEl.textContent = 'GPS ERROR / IZIN DITOLAK';
+  statusEl.style.color = '#ff3b30';
+}
+
+function updateHeading(lat, lon) {
+  if (window._lastPosHeading) {
+    const dLat = lat - window._lastPosHeading.lat;
+    const dLon = lon - window._lastPosHeading.lon;
+    const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+    
+    // Jika pergerakan cukup jauh, hitung sudut baru
+    if (dist > 0.00003) {
+      const bearing = Math.atan2(dLon * Math.cos(lat * Math.PI / 180), dLat) * 180 / Math.PI;
+      heading = (bearing + 360) % 360;
+      
+      // Putar ikon mobil
+      const mobilEl = document.getElementById('mobilSaya');
+      if (mobilEl) {
+        mobilEl.style.transform = 'rotate(' + heading + 'deg)';
+      }
+      window._lastPosHeading = { lat: lat, lon: lon };
+    }
+  } else {
+    window._lastPosHeading = { lat: lat, lon: lon };
+  }
+}
+
+// ================= UI & TOAST =================
+function showToast(msg, duration) {
+  duration = duration || 2500;
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.classList.remove('show'); }, duration);
+}
+
+function kembaliKePosisiSaya() {
+  followMode = true;
+  const btn = document.getElementById('btnRecenter');
+  if (btn) btn.style.background = '#18a84b'; // Kembali hijau
+  
+  if (posisiSaya) {
+    map.setView([posisiSaya.lat, posisiSaya.lon], map.getZoom(), { animate: true });
+  } else {
+    showToast('Posisi GPS belum tersedia');
+  }
+}
+  
   
