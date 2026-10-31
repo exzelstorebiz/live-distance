@@ -509,14 +509,26 @@ async function mulaiPerjalanan() {
     if (posisiSaya) map.setView([posisiSaya.lat, posisiSaya.lon], 17);
   }, 100);
 
+    // ... (kode atasnya biarkan saja) ...
+  
   document.getElementById('instruksiBox').style.display = 'flex';
   followMode = true;
+  
+  // TAMBAHKAN BARIS INI:
+  mintaWakeLock(); 
+  
+  hitungRute(true); 
+}
   hitungRute(true); // Paksa hitung rute pertama kali
 }
 
 function batalPerjalanan() {
+  // TAMBAHKAN BARIS INI:
+  lepasWakeLock();
+
   document.getElementById('halamanNavigasi').style.display = 'none';
   document.getElementById('halamanRencana').style.display = 'flex';
+}
   document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
   
   if (markerTujuan) map.removeLayer(markerTujuan);
@@ -727,6 +739,42 @@ document.addEventListener('DOMContentLoaded', function() {
   mulaiGPS();
   document.getElementById('inputTujuan').addEventListener('input', cekFormRencana);
 });
+  
+  // ================= FITUR WAKE LOCK (LAYAR TETAP MENYALA) =================
+let wakeLock = null;
+
+async function mintaWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock aktif: Layar akan tetap menyala');
+    } else {
+      console.log('Browser tidak mendukung Wake Lock');
+    }
+  } catch (err) {
+    console.warn('Gagal mengaktifkan Wake Lock:', err);
+  }
+}
+
+function lepasWakeLock() {
+  if (wakeLock !== null) {
+    wakeLock.release()
+      .then(() => {
+        wakeLock = null;
+        console.log('Wake Lock dimatikan');
+      });
+  }
+}
+
+// Pastikan Wake Lock kembali menyala jika pengguna pindah tab/aplikasi lalu kembali
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock !== null && document.visibilityState === 'visible') {
+    if (document.getElementById('halamanNavigasi').style.display === 'block') {
+      mintaWakeLock();
+    }
+  }
+});
+// =========================================================================
 </script>
 </body>
 </html>
