@@ -627,8 +627,9 @@ function gambarRuteNeon(idxTerdekat) {
   if (latlngsSisa.length > 1) {
     // Efek Cahaya (Violet Tajam)
     ruteLayerGlow = L.polyline(latlngsSisa, {
-      color: '#a855f7', weight: 12, opacity: 0.6, lineCap: 'round', lineJoin: 'round'
-    }).addTo(map);
+  // Ubah color menjadi lebih pekat, dan opacity menjadi 1 (padat)
+  color: '#7c3aed', weight: 12, opacity: 0.8, lineCap: 'round', lineJoin: 'round'
+}).addTo(map);
 
     // Garis Inti (Putih Lebih Tipis)
     ruteLayerSisa = L.polyline(latlngsSisa, {
