@@ -519,9 +519,7 @@ async function mulaiPerjalanan() {
   
   hitungRute(true); 
 }
-  hitungRute(true); // Paksa hitung rute pertama kali
-
-
+  
 function batalPerjalanan() {
   // TAMBAHKAN BARIS INI:
   lepasWakeLock();
@@ -560,8 +558,8 @@ function cekPosisiDiRute() {
     if (d < jarakMin) { jarakMin = d; idxTerdekat = i; }
   }
 
-  // Toleransi keluar jalur: 50 meter
-  const TOLERANSI = 50;
+  // Toleransi keluar jalur: 30 meter
+  const TOLERANSI = 30;
 
   if (jarakMin > TOLERANSI) {
     // JIKA KELUAR JALUR: Hitung rute baru
