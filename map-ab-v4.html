@@ -57,9 +57,8 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
   box-shadow: 0 4px 15px rgba(0,0,0,.3);
 }
 .btn-batal {
-  background: #ff3b30; color: white; border: 0; border-radius: 8px;
-  width: 36px; height: 36px; font-size: 18px; font-weight: bold; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
+  background: transparent; width: 36px; height: 36px; padding: 0; border: none; 
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
 .tujuan-text { flex: 1; font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .status-gps { font-size: 10px; color: #18a84b; font-weight: bold; display: block; margin-top: 2px;}
@@ -68,7 +67,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
   position: fixed; top: 70px; left: 10px; right: 10px; z-index: 999;
   background: #1e1e2e; color: white; border-radius: 12px;
   padding: 12px 15px; box-shadow: 0 3px 15px rgba(0,0,0,.25);
-  display: flex; align-items: center; gap: 15px;
+  display: none; align-items: center; gap: 15px;
 }
 .instruksi-icon { font-size: 30px; }
 .instruksi-text { font-size: 16px; font-weight: 800; }
@@ -92,14 +91,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
   display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
 
-/* ================= IKON & TOAST ================= */
-.marker-mobil {
-  width: 50px; height: 50px;
-  filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.5));
-  transition: transform 0.5s linear;
-}
-.marker-mobil svg { width: 100%; height: 100%; }
-
+/* ================= TOAST ================= */
 .toast {
   position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%);
   background: #333; color: white; padding: 10px 18px; border-radius: 20px;
@@ -142,19 +134,19 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
   <div id="map"></div>
 
   <div class="panel-atas">
-    <button class="btn-batal" onclick="batalPerjalanan()" style="background: transparent; width: 36px; height: 36px; padding: 0; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-  <svg viewBox="0 0 100 120" style="width: 32px; height: 32px; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));">
-    <path d="M 50 0 C 22.4 0 0 22.4 0 50 C 0 85 50 120 50 120 C 50 120 100 85 100 50 C 100 22.4 77.6 0 50 0 Z" fill="#ff8100" />
-    <circle cx="50" cy="45" r="20" fill="#ffffff" opacity="0.2"/>
-  </svg>
-</button>
+    <button class="btn-batal" onclick="batalPerjalanan()">
+      <svg viewBox="0 0 100 120" style="width: 32px; height: 32px; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));">
+        <path d="M 50 0 C 22.4 0 0 22.4 0 50 C 0 85 50 120 50 120 C 50 120 100 85 100 50 C 100 22.4 77.6 0 50 0 Z" fill="#ff8100" />
+        <circle cx="50" cy="45" r="20" fill="#ffffff" opacity="0.2"/>
+      </svg>
+    </button>
     <div class="tujuan-text">
       <div id="tujuanNama">Tujuan</div>
       <span class="status-gps" id="gpsStatus">MENCARI GPS...</span>
     </div>
   </div>
 
-  <div class="instruksi-box" id="instruksiBox" style="display:none;">
+  <div class="instruksi-box" id="instruksiBox">
     <div class="instruksi-icon" id="turnIcon">⬆️</div>
     <div>
       <div class="instruksi-text" id="turnText">Lurus</div>
@@ -201,37 +193,36 @@ let ruteLayerLewat = null;
 let ruteLayerSisa = null;  
 let ruteLayerGlow = null;  
 
+// State Rute
 let ruteData = null;
-let ruteCoordinates = [];
+let ruteAsli = []; // Koordinat rute yang dikunci
 let watchId = null;
 let lastRuteCalc = 0;
 let calcInProgress = false;
-
-// State untuk deteksi keluar jalur & garis redup
-let ruteAsli = []; // Menyimpan koordinat rute yang dikunci
 let isOffRoute = false;
 
+// Wake Lock State
+let wakeLock = null;
+
 // ================= ICONS (SVG) =================
-// Ikon Mobil Futuristik (Violet & Oranye)
+// 1. Ikon Mobil (PNG)
 const iconSaya = L.divIcon({
-  className: "", // Kosongkan class bawaan Leaflet
+  className: "", 
   html: `
     <div id="mobilSaya" style="width: 65px; height: 65px; transition: transform 0.3s linear; transform-origin: center center;">
       <img src="mobil.png" style="width: 100%; height: 100%; object-fit: contain;">
     </div>
   `,
   iconSize: [65, 65],
-  iconAnchor: [22.5, 22.5]
+  iconAnchor: [32.5, 32.5]
 });
 
-// Ikon Pin Tujuan Baru (Oranye dengan Cincin)
+// 2. Ikon Pin Tujuan (Oranye)
 const iconTujuan = L.divIcon({
   className: "",
   html: `
     <div style="position:relative; width:48px; height:48px;">
-      <!-- Cincin Bawah -->
       <div style="position:absolute; bottom:-5px; left:50%; transform:translateX(-50%); width:30px; height:15px; background:radial-gradient(ellipse at center, rgba(255,129,0,0.8) 0%, rgba(255,129,0,0) 70%); border-radius:50%;"></div>
-      <!-- Pin Body -->
       <svg viewBox="0 0 100 120" style="width:100%; height:100%; filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.5));">
         <path d="M 50 0 C 22.4 0 0 22.4 0 50 C 0 85 50 120 50 120 C 50 120 100 85 100 50 C 100 22.4 77.6 0 50 0 Z" fill="#ff8100" />
         <circle cx="50" cy="45" r="18" fill="#ffffff" opacity="0.3"/>
@@ -249,20 +240,21 @@ function initMap() {
     attributionControl: false
   }).setView([-6.387, 106.936], 16);
 
+  // Tile OpenStreetMap
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19
   }).addTo(map);
 
   L.control.zoom({ position: 'topright' }).addTo(map);
 
-  // Event saat peta digeser manual
+  // Event jika peta digeser manual
   map.on('dragstart', function() {
     followMode = false;
     const btn = document.getElementById('btnRecenter');
-    if (btn) btn.style.background = '#7138e8'; // Berubah ungu jika lepas kunci
+    if (btn) btn.style.background = '#7138e8'; 
   });
 
-  // Event klik peta (untuk fitur Pilih di Peta)
+  // Event klik peta (Pilih di Peta)
   map.on('click', function(e) {
     if (!modePilihTujuan) return;
     modePilihTujuan = false;
@@ -304,14 +296,14 @@ function onPosition(position) {
   document.getElementById('gpsStatus').textContent = 'GPS AKTIF (Akurasi: ' + Math.round(acc) + 'm)';
   document.getElementById('gpsStatus').style.color = '#18a84b';
 
-  // Update form rencana
+  // Update form input awal
   const inputAwal = document.getElementById('inputAwal');
   if (inputAwal && document.getElementById('halamanRencana').style.display !== 'none') {
     inputAwal.value = lat.toFixed(6) + ', ' + lon.toFixed(6);
     cekFormRencana();
   }
 
-  // Update Marker & Akurasi
+  // Update Marker & Lingkaran Akurasi
   if (!markerSaya) {
     markerSaya = L.marker([lat, lon], { icon: iconSaya, zIndexOffset: 1000 }).addTo(map);
   } else {
@@ -328,17 +320,16 @@ function onPosition(position) {
     circleAkurasi.setRadius(acc);
   }
 
-  // Update heading (arah putar mobil)
+  // Putar ikon mobil
   updateHeading(lat, lon);
 
-  // Logika Navigasi (Hanya jika sedang di halaman navigasi)
+  // Cek Navigasi jika sedang di halaman peta
   if (titikTujuan && document.getElementById('halamanNavigasi').style.display === 'block') {
     cekPosisiDiRute();
   }
 
-  // KUNCI PETA DI TENGAH (Selalu ikuti mobil jika followMode aktif)
+  // Kunci peta di tengah
   if (followMode) {
-    // Gunakan panTo agar lebih halus
     map.panTo([lat, lon], { animate: true, duration: 0.5, easeLinearity: 0.5 });
   }
 }
@@ -356,11 +347,10 @@ function updateHeading(lat, lon) {
     const dLon = lon - window._lastPosHeading.lon;
     const dist = Math.sqrt(dLat * dLat + dLon * dLon);
     
-    if (dist > 0.00003) { // Jika bergerak lebih dari ~3 meter
+    if (dist > 0.00003) { // Bergerak > ~3 meter
       const bearing = Math.atan2(dLon * Math.cos(lat * Math.PI / 180), dLat) * 180 / Math.PI;
       heading = (bearing + 360) % 360;
       
-      // Putar div pembungkus gambar
       const mobilEl = document.getElementById('mobilSaya');
       if (mobilEl) {
         mobilEl.style.transform = 'rotate(' + heading + 'deg)';
@@ -385,7 +375,7 @@ function showToast(msg, duration) {
 function kembaliKePosisiSaya() {
   followMode = true;
   const btn = document.getElementById('btnRecenter');
-  if (btn) btn.style.background = '#18a84b'; // Kembali hijau
+  if (btn) btn.style.background = '#18a84b';
   
   if (posisiSaya) {
     map.panTo([posisiSaya.lat, posisiSaya.lon], { animate: true });
@@ -394,6 +384,31 @@ function kembaliKePosisiSaya() {
   }
 }
 
+// ================= WAKE LOCK =================
+async function mintaWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock aktif');
+    }
+  } catch (err) {
+    console.warn('Gagal Wake Lock:', err);
+  }
+}
+
+function lepasWakeLock() {
+  if (wakeLock !== null) {
+    wakeLock.release().then(() => { wakeLock = null; });
+  }
+}
+
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock !== null && document.visibilityState === 'visible') {
+    if (document.getElementById('halamanNavigasi').style.display === 'block') {
+      mintaWakeLock();
+    }
+  }
+});
   // ================= FORM & PARSING LOKASI =================
 function cekFormRencana() {
   const awal = document.getElementById('inputAwal').value;
@@ -468,7 +483,7 @@ function pilihDiPeta() {
   showToast('Ketuk pada peta untuk memilih lokasi tujuan', 4000);
 }
 
-// ================= MULAI & BATAL PERJALANAN =================
+// ================= MULAI & BATAL =================
 async function mulaiPerjalanan() {
   const tujuanInput = document.getElementById('inputTujuan').value.trim();
   if (!tujuanInput) { showToast('Tujuan belum diisi'); return; }
@@ -509,21 +524,16 @@ async function mulaiPerjalanan() {
     if (posisiSaya) map.setView([posisiSaya.lat, posisiSaya.lon], 17);
   }, 100);
 
-    // ... (kode atasnya biarkan saja) ...
-  
   document.getElementById('instruksiBox').style.display = 'flex';
   followMode = true;
   
-  // TAMBAHKAN BARIS INI:
+  // Wake lock & Hitung rute
   mintaWakeLock(); 
-  
   hitungRute(true); 
 }
-  
-function batalPerjalanan() {
-  // TAMBAHKAN BARIS INI:
-  lepasWakeLock();
 
+function batalPerjalanan() {
+  lepasWakeLock();
   document.getElementById('halamanNavigasi').style.display = 'none';
   document.getElementById('halamanRencana').style.display = 'flex';
   document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
@@ -532,8 +542,8 @@ function batalPerjalanan() {
   if (ruteLayerLewat) map.removeLayer(ruteLayerLewat);
   if (ruteLayerSisa) map.removeLayer(ruteLayerSisa);
   if (ruteLayerGlow) map.removeLayer(ruteLayerGlow);
+  
   titikTujuan = null;
-  ruteCoordinates = [];
   ruteAsli = [];
 }
 
@@ -545,35 +555,32 @@ function setTujuan(lat, lon, nama) {
   markerTujuan = L.marker([lat, lon], { icon: iconTujuan }).addTo(map);
 }
 
-// ================= LOGIKA RUTE (KUNCI & DETEKSI) =================
-// Fungsi ini mengecek apakah user keluar jalur atau masih di jalur
+// ================= LOGIKA RUTE & DETEKSI =================
 function cekPosisiDiRute() {
   if (!posisiSaya || ruteAsli.length === 0) return;
 
-  // Cari jarak terdekat user ke garis rute asli
   let jarakMin = Infinity;
   let idxTerdekat = 0;
+  
+  // Cari titik terdekat pada rute
   for (let i = 0; i < ruteAsli.length; i++) {
     const d = jarakMeter(posisiSaya.lat, posisiSaya.lon, ruteAsli[i].lat, ruteAsli[i].lon);
     if (d < jarakMin) { jarakMin = d; idxTerdekat = i; }
   }
 
-  // Toleransi keluar jalur: 30 meter
-  const TOLERANSI = 30;
+  const TOLERANSI = 30; // 30 meter
 
   if (jarakMin > TOLERANSI) {
-    // JIKA KELUAR JALUR: Hitung rute baru
+    // KELUAR JALUR
     if (!isOffRoute) {
       isOffRoute = true;
       showToast('Anda keluar jalur. Menghitung rute baru...');
       hitungRute(true); 
     }
   } else {
-    // JIKA MASIH DI JALUR: Hanya potong garis (redup vs neon)
+    // MASIH DI JALUR
     isOffRoute = false;
     gambarRuteNeon(idxTerdekat);
-    
-    // Update info jarak & waktu
     updateInfoJarakDariIdx(idxTerdekat);
     updateInstruksi(idxTerdekat);
   }
@@ -584,7 +591,6 @@ async function hitungRute(force) {
   if (calcInProgress) return;
 
   const now = Date.now();
-  // Jangan hitung rute jika belum 5 detik (kecuali dipaksa)
   if (!force && now - lastRuteCalc < 5000) return; 
   lastRuteCalc = now;
   calcInProgress = true;
@@ -600,12 +606,14 @@ async function hitungRute(force) {
     if (!data.routes || !data.routes.length) return;
 
     ruteData = data.routes[0];
-    // Simpan rute asli yang dikunci
     ruteAsli = ruteData.geometry.coordinates.map(c => ({ lat: c[1], lon: c[0] }));
     
-    // Paksa gambar ulang dari indeks 0
+    isOffRoute = false; 
+    
+    // Gambar ulang dari awal
     gambarRuteNeon(0);
     updateInfoJarakDariIdx(0);
+    updateInstruksi(0);
   } catch (err) {
     console.error('Route error:', err);
   } finally {
@@ -613,41 +621,41 @@ async function hitungRute(force) {
   }
 }
 
-// ================= GAMBAR GARIS NEON & REDUP =================
+// ================= GAMBAR RUTE =================
 function gambarRuteNeon(idxTerdekat) {
   if (!ruteAsli.length) return;
   
+  // Hapus layer lama
   if (ruteLayerLewat) map.removeLayer(ruteLayerLewat);
   if (ruteLayerSisa) map.removeLayer(ruteLayerSisa);
   if (ruteLayerGlow) map.removeLayer(ruteLayerGlow);
 
-  // Potong rute berdasarkan posisi terdekat
+  // Bagi rute menjadi 2 bagian
   const latlngsLewat = ruteAsli.slice(0, idxTerdekat + 1).map(c => [c.lat, c.lon]);
   const latlngsSisa = ruteAsli.slice(idxTerdekat).map(c => [c.lat, c.lon]);
 
-  // 1. Rute Lewat (Redup)
+  // 1. Garis Redup (Sudah dilalui)
   if (latlngsLewat.length > 1) {
     ruteLayerLewat = L.polyline(latlngsLewat, {
       color: '#5b2b9e', weight: 6, opacity: 0.4, lineCap: 'round'
     }).addTo(map);
   }
 
-  // 2. Rute Sisa (Neon)
+  // 2. Garis Neon (Sisa Perjalanan)
   if (latlngsSisa.length > 1) {
     // Efek Cahaya (Violet Tajam)
     ruteLayerGlow = L.polyline(latlngsSisa, {
-  // Ubah color menjadi lebih pekat, dan opacity menjadi 1 (padat)
-  color: '#7c3aed', weight: 12, opacity: 0.8, lineCap: 'round', lineJoin: 'round'
-}).addTo(map);
+      color: '#7c3aed', weight: 12, opacity: 0.8, lineCap: 'round', lineJoin: 'round'
+    }).addTo(map);
 
-    // Garis Inti (Putih Lebih Tipis)
+    // Garis Inti (Putih Tipis)
     ruteLayerSisa = L.polyline(latlngsSisa, {
       color: '#ffffff', weight: 2, opacity: 1, lineCap: 'round', lineJoin: 'round'
     }).addTo(map);
   }
 }
 
-// ================= INFO JARAK & INSTRUKSI =================
+// ================= INFO & INSTRUKSI =================
 function updateInfoJarakDariIdx(idxTerdekat) {
   if (!ruteData || !ruteAsli.length) return;
 
@@ -658,7 +666,6 @@ function updateInfoJarakDariIdx(idxTerdekat) {
 
   document.getElementById('sisaJarak').textContent = formatJarak(sisa);
   
-  // Kecepatan rata-rata 30 km/jam
   const detikSisa = sisa / (30000 / 3600); 
   const menitSisa = Math.round(detikSisa / 60);
   
@@ -736,43 +743,6 @@ document.addEventListener('DOMContentLoaded', function() {
   mulaiGPS();
   document.getElementById('inputTujuan').addEventListener('input', cekFormRencana);
 });
-  
-  // ================= FITUR WAKE LOCK (LAYAR TETAP MENYALA) =================
-let wakeLock = null;
-
-async function mintaWakeLock() {
-  try {
-    if ('wakeLock' in navigator) {
-      wakeLock = await navigator.wakeLock.request('screen');
-      console.log('Wake Lock aktif: Layar akan tetap menyala');
-    } else {
-      console.log('Browser tidak mendukung Wake Lock');
-    }
-  } catch (err) {
-    console.warn('Gagal mengaktifkan Wake Lock:', err);
-  }
-}
-
-function lepasWakeLock() {
-  if (wakeLock !== null) {
-    wakeLock.release()
-      .then(() => {
-        wakeLock = null;
-        console.log('Wake Lock dimatikan');
-      });
-  }
-}
-
-// Pastikan Wake Lock kembali menyala jika pengguna pindah tab/aplikasi lalu kembali
-document.addEventListener('visibilitychange', async () => {
-  if (wakeLock !== null && document.visibilityState === 'visible') {
-    if (document.getElementById('halamanNavigasi').style.display === 'block') {
-      mintaWakeLock();
-    }
-  }
-});
-// =========================================================================
 </script>
 </body>
 </html>
-  
