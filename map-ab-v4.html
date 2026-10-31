@@ -520,7 +520,7 @@ async function mulaiPerjalanan() {
   hitungRute(true); 
 }
   hitungRute(true); // Paksa hitung rute pertama kali
-}
+
 
 function batalPerjalanan() {
   // TAMBAHKAN BARIS INI:
@@ -528,7 +528,6 @@ function batalPerjalanan() {
 
   document.getElementById('halamanNavigasi').style.display = 'none';
   document.getElementById('halamanRencana').style.display = 'flex';
-}
   document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
   
   if (markerTujuan) map.removeLayer(markerTujuan);
