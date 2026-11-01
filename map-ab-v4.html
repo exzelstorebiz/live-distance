@@ -568,7 +568,9 @@ function cekPosisiDiRute() {
     if (d < jarakMin) { jarakMin = d; idxTerdekat = i; }
   }
 
-  const TOLERANSI = 30; // 30 meter
+  // PERBAIKAN 1: Toleransi diperbesar menjadi 55 meter 
+  // (Agar tidak rewel saat GPS melayang atau saat menyalip)
+  const TOLERANSI = 55;
 
   if (jarakMin > TOLERANSI) {
     // KELUAR JALUR
