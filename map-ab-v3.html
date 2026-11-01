@@ -594,6 +594,20 @@ async function mulaiPerjalanan() {
   // Wake lock & Hitung rute
   mintaWakeLock(); 
   hitungRute(true); 
+    // ... (kode atasnya biarkan saja) ...
+
+  document.getElementById('instruksiBox').style.display = 'flex';
+  followMode = true;
+  
+  // Wake lock & Hitung rute
+  mintaWakeLock(); 
+  hitungRute(true); 
+
+  // TAMBAHKAN BARIS INI UNTUK SUARA SAPAAN:
+  setTimeout(() => {
+    putarSuara("Selamat menikmati perjalanan. Hati-hati selama perjalanan sayang.");
+  }, 1500); // Jeda 1.5 detik agar suara tidak bertabrakan dengan suara instruksi pertama
+}
 }
 
 function batalPerjalanan() {
@@ -784,7 +798,7 @@ function updateInstruksi(idxTerdekat) {
   let icon = '⬆️', text = 'Lurus';
 
   if (type === 'turn') {
-    if (modifier.includes('slight left')) { icon = '↖️'; text = 'Agak Kiri sayang'; }
+    if (modifier.includes('slight left')) { icon = '↖️'; text = 'Agak Kiri sayan'; }
     else if (modifier.includes('slight right')) { icon = '↗️'; text = 'Agak Kanan sayang'; }
     else if (modifier.includes('left')) { icon = '⬅️'; text = 'Belok Kiri sayang'; }
     else if (modifier.includes('right')) { icon = '➡️'; text = 'Belok Kanan sayang'; }
