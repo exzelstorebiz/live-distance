@@ -198,6 +198,15 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 <script>
 // Kode JavaScript Bagian 2, 3, dan 4 menyusul
   // ================= STATE =================
+  // ================= STATE =================
+
+// ... (biarkan kode state lainnya) ...
+
+// TAMBAHKAN 4 BARIS INI:
+let suaraPerempuan = null;
+let instruksiTerakhir = ""; 
+let belokan200SudahBerbunyi = false;
+let belokan50SudahBerbunyi = false;
 let map;
 let posisiSaya = null;
 let titikTujuan = null;
@@ -430,11 +439,7 @@ document.addEventListener('visibilitychange', async () => {
     }
   }
 });
-  // ================= FITUR SUARA (TEXT-TO-SPEECH) =================
-let suaraPerempuan = null;
-let instruksiTerakhir = ""; 
-let belokan200SudahBerbunyi = false;
-let belokan50SudahBerbunyi = false;
+  
 
 function muatSuara() {
   const daftarSuara = window.speechSynthesis.getVoices();
