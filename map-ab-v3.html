@@ -464,8 +464,9 @@ function putarSuara(teks) {
   window.speechSynthesis.cancel();
   const ucapan = new SpeechSynthesisUtterance(teks);
   ucapan.lang = 'id-ID'; 
-  ucapan.rate = 1.0;     
-  ucapan.pitch = 1.1;    
+  ucapan.rate = 0.9;     
+  ucapan.pitch = 1.0;
+  ucapan.volume = 0.9;
   if (suaraPerempuan) ucapan.voice = suaraPerempuan;
   window.speechSynthesis.speak(ucapan);
 }
