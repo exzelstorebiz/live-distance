@@ -50,6 +50,14 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 #halamanNavigasi { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 1000; }
 #map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
 
+/* Trik Dark Mode Menggunakan CSS Filter */
+.leaflet-layer,
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out,
+.leaflet-control-attribution {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
 .panel-atas {
   position: fixed; top: 10px; left: 10px; right: 10px; z-index: 1000;
   background: rgba(30, 30, 46, 0.95); color: white; border-radius: 12px;
@@ -72,6 +80,17 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 .instruksi-icon { font-size: 30px; }
 .instruksi-text { font-size: 16px; font-weight: 800; }
 .instruksi-dist { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+/* CSS Foto Driver */
+.foto-driver {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  margin-left: auto; /* Mendorong foto ke paling kanan */
+}
 
 .panel-bawah {
   position: fixed; bottom: 15px; left: 10px; right: 10px; z-index: 1000;
@@ -99,69 +118,6 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
   pointer-events: none; max-width: 85%; text-align: center;
 }
 .toast.show { opacity: 1; }
-  
-  /* CSS Foto Driver */
-.foto-driver {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-  margin-left: auto; /* Mendorong foto ke paling kanan */
-}
-  
-  // ================= FITUR SUARA (TEXT-TO-SPEECH) =================
-let suaraPerempuan = null;
-let instruksiTerakhir = ""; // Mencegah suara berbunyi berulang-ulang di jarak yang sama
-let belokan200SudahBerbunyi = false;
-let belokan50SudahBerbunyi = false;
-
-// Fungsi untuk mencari suara perempuan di HP pengguna
-function muatSuara() {
-  const daftarSuara = window.speechSynthesis.getVoices();
-  
-  // Cari suara berbahasa Indonesia terlebih dahulu
-  let suaraID = daftarSuara.filter(s => s.lang.includes('id') || s.lang.includes('ID'));
-  
-  if (suaraID.length > 0) {
-    // Jika ada suara Indonesia, cari yang perempuannya (biasanya ada kata 'female' atau 'wanita')
-    let perempuan = suaraID.find(s => s.name.toLowerCase().includes('female') || s.name.toLowerCase().includes('wanita'));
-    suaraPerempuan = perempuan || suaraID[0]; // Jika tidak ketemu, pakai suara Indonesia pertama
-  } else {
-    // Jika HP tidak punya suara Indonesia, cari suara perempuan berbahasa Inggris sebagai cadangan
-    let inggris = daftarSuara.filter(s => s.lang.includes('en'));
-    suaraPerempuan = inggris.find(s => s.name.toLowerCase().includes('female')) || inggris[0] || daftarSuara[0];
-  }
-}
-
-// Panggil fungsi muatSuara saat suara di HP siap
-if ('speechSynthesis' in window) {
-  window.speechSynthesis.onvoiceschanged = muatSuara;
-  muatSuara(); // Panggil langsung jika sudah siap
-}
-
-// Fungsi utama untuk memutar suara
-function putarSuara(teks) {
-  if (!('speechSynthesis' in window)) {
-    console.warn('Browser tidak mendukung fitur suara');
-    return;
-  }
-  
-  // Hentikan suara sebelumnya jika masih berbunyi
-  window.speechSynthesis.cancel();
-  
-  const ucapan = new SpeechSynthesisUtterance(teks);
-  ucapan.lang = 'id-ID'; // Set bahasa Indonesia
-  ucapan.rate = 1.0;     // Kecepatan bicara normal
-  ucapan.pitch = 1.1;    // Sedikit lebih tinggi agar terdengar seperti suara perempuan
-  
-  if (suaraPerempuan) {
-    ucapan.voice = suaraPerempuan;
-  }
-  
-  window.speechSynthesis.speak(ucapan);
-}
 </style>
 </head>
 <body>
@@ -209,14 +165,14 @@ function putarSuara(teks) {
     </div>
   </div>
 
- <div class="instruksi-box" id="instruksiBox">
-  <div class="instruksi-icon" id="turnIcon">⬆️</div>
-  <div style="flex: 1;">
-    <div class="instruksi-text" id="turnText">Driver: SOREN SUHENDRO</div>
-    <div class="instruksi-dist" id="turnDist">-</div>
+  <div class="instruksi-box" id="instruksiBox">
+    <div class="instruksi-icon" id="turnIcon">⬆️</div>
+    <div style="flex: 1;">
+      <div class="instruksi-text" id="turnText">Driver: SOREN SUHENDRO</div>
+      <div class="instruksi-dist" id="turnDist">-</div>
+    </div>
+    <img src="foto-driver.JPG" alt="Driver" class="foto-driver">
   </div>
-  <img src="foto-driver.JPG" alt="Driver" class="foto-driver">
-</div>
 
   <button class="btn-recenter" id="btnRecenter" onclick="kembaliKePosisiSaya()">📍</button>
 
@@ -240,7 +196,8 @@ function putarSuara(teks) {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ================= STATE =================
+// Kode JavaScript Bagian 2, 3, dan 4 menyusul
+  // ================= STATE =================
 let map;
 let posisiSaya = null;
 let titikTujuan = null;
@@ -259,7 +216,7 @@ let ruteLayerGlow = null;
 
 // State Rute
 let ruteData = null;
-let ruteAsli = []; // Koordinat rute yang dikunci
+let ruteAsli = []; 
 let watchId = null;
 let lastRuteCalc = 0;
 let calcInProgress = false;
@@ -304,7 +261,7 @@ function initMap() {
     attributionControl: false
   }).setView([-6.387, 106.936], 16);
 
-  // Tile OpenStreetMap
+  // Tile OpenStreetMap (Warna akan dibalik oleh CSS Filter di Bagian 1)
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19
   }).addTo(map);
@@ -473,7 +430,42 @@ document.addEventListener('visibilitychange', async () => {
     }
   }
 });
-  // ================= FORM & PARSING LOKASI =================
+  // ================= FITUR SUARA (TEXT-TO-SPEECH) =================
+let suaraPerempuan = null;
+let instruksiTerakhir = ""; 
+let belokan200SudahBerbunyi = false;
+let belokan50SudahBerbunyi = false;
+
+function muatSuara() {
+  const daftarSuara = window.speechSynthesis.getVoices();
+  let suaraID = daftarSuara.filter(s => s.lang.includes('id') || s.lang.includes('ID'));
+  
+  if (suaraID.length > 0) {
+    let perempuan = suaraID.find(s => s.name.toLowerCase().includes('female') || s.name.toLowerCase().includes('wanita'));
+    suaraPerempuan = perempuan || suaraID[0]; 
+  } else {
+    let inggris = daftarSuara.filter(s => s.lang.includes('en'));
+    suaraPerempuan = inggris.find(s => s.name.toLowerCase().includes('female')) || inggris[0] || daftarSuara[0];
+  }
+}
+
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = muatSuara;
+  muatSuara(); 
+}
+
+function putarSuara(teks) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const ucapan = new SpeechSynthesisUtterance(teks);
+  ucapan.lang = 'id-ID'; 
+  ucapan.rate = 1.0;     
+  ucapan.pitch = 1.1;    
+  if (suaraPerempuan) ucapan.voice = suaraPerempuan;
+  window.speechSynthesis.speak(ucapan);
+}
+
+// ================= FORM & PARSING LOKASI =================
 function cekFormRencana() {
   const awal = document.getElementById('inputAwal').value;
   const tujuan = document.getElementById('inputTujuan').value;
@@ -507,7 +499,7 @@ async function tempelWA() {
     const parsed = parseShareLocation(text);
     if (parsed) {
       document.getElementById('inputTujuan').value = parsed.lat.toFixed(6) + ', ' + parsed.lon.toFixed(6);
-      showToast('Koordinat berhasil diambil dari clipboard');
+      showToast('Koordinat berhasil diambil');
       cekFormRencana();
     } else if (text.includes('http')) {
       showToast('Link terdeteksi. Membuka link...', 4000);
@@ -516,7 +508,7 @@ async function tempelWA() {
         document.getElementById('inputTujuan').value = extracted.lat.toFixed(6) + ', ' + extracted.lon.toFixed(6);
         cekFormRencana();
       } else {
-        showToast('Link terlalu rumit. Harap ketik nama jalan/alamatnya saja.');
+        showToast('Link terlalu rumit. Harap ketik nama jalan/alamatnya.');
       }
     } else {
       document.getElementById('inputTujuan').value = text;
@@ -547,7 +539,7 @@ function pilihDiPeta() {
   showToast('Ketuk pada peta untuk memilih lokasi tujuan', 4000);
 }
 
-// ================= MULAI & BATAL =================
+// ================= MULAI & BATAL PERJALANAN =================
 async function mulaiPerjalanan() {
   const tujuanInput = document.getElementById('inputTujuan').value.trim();
   if (!tujuanInput) { showToast('Tujuan belum diisi'); return; }
@@ -591,27 +583,19 @@ async function mulaiPerjalanan() {
   document.getElementById('instruksiBox').style.display = 'flex';
   followMode = true;
   
-  // Wake lock & Hitung rute
-  mintaWakeLock(); 
-  hitungRute(true); 
-    // ... (kode atasnya biarkan saja) ...
-
-  document.getElementById('instruksiBox').style.display = 'flex';
-  followMode = true;
-  
-  // Wake lock & Hitung rute
   mintaWakeLock(); 
   hitungRute(true); 
 
-  // TAMBAHKAN BARIS INI UNTUK SUARA SAPAAN:
+  // Suara Sapaan (Jeda 1.5 detik agar tidak bertabrakan dengan instruksi rute)
   setTimeout(() => {
     putarSuara("Selamat menikmati perjalanan. Hati-hati selama perjalanan sayang.");
-  }, 1500); // Jeda 1.5 detik agar suara tidak bertabrakan dengan suara instruksi pertama
-}
+  }, 1500); 
 }
 
 function batalPerjalanan() {
   lepasWakeLock();
+  window.speechSynthesis.cancel(); // Hentikan suara jika masih berbunyi
+
   document.getElementById('halamanNavigasi').style.display = 'none';
   document.getElementById('halamanRencana').style.display = 'flex';
   document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
@@ -623,18 +607,7 @@ function batalPerjalanan() {
   
   titikTujuan = null;
   ruteAsli = [];
-  
-  ruteData = data.routes[0];
-ruteAsli = ruteData.geometry.coordinates.map(c => ({ lat: c[1], lon: c[0] }));
-
-// TAMBAHKAN 2 BARIS INI:
-instruksiTerakhir = ""; 
-belokan200SudahBerbunyi = false;
-belokan50SudahBerbunyi = false;
-
-isOffRoute = false; 
 }
-  
 
 function setTujuan(lat, lon, nama) {
   titikTujuan = { lat: lat, lon: lon, nama: nama };
@@ -643,8 +616,7 @@ function setTujuan(lat, lon, nama) {
   if (markerTujuan) map.removeLayer(markerTujuan);
   markerTujuan = L.marker([lat, lon], { icon: iconTujuan }).addTo(map);
 }
-
-// ================= LOGIKA RUTE & DETEKSI =================
+  // ================= LOGIKA RUTE & DETEKSI =================
 function cekPosisiDiRute() {
   if (!posisiSaya || ruteAsli.length === 0) return;
 
@@ -657,8 +629,7 @@ function cekPosisiDiRute() {
     if (d < jarakMin) { jarakMin = d; idxTerdekat = i; }
   }
 
-  // PERBAIKAN 1: Toleransi diperbesar menjadi 55 meter 
-  // (Agar tidak rewel saat GPS melayang atau saat menyalip)
+  // Toleransi keluar jalur 55 meter
   const TOLERANSI = 55;
 
   if (jarakMin > TOLERANSI) {
@@ -699,6 +670,10 @@ async function hitungRute(force) {
     ruteData = data.routes[0];
     ruteAsli = ruteData.geometry.coordinates.map(c => ({ lat: c[1], lon: c[0] }));
     
+    // Reset status suara saat rute baru dibuat
+    instruksiTerakhir = ""; 
+    belokan200SudahBerbunyi = false;
+    belokan50SudahBerbunyi = false;
     isOffRoute = false; 
     
     // Gambar ulang dari awal
@@ -728,7 +703,7 @@ function gambarRuteNeon(idxTerdekat) {
   // 1. Garis Redup (Sudah dilalui)
   if (latlngsLewat.length > 1) {
     ruteLayerLewat = L.polyline(latlngsLewat, {
-      color: '#5b2b9e', weight: 6, opacity: 0.4, lineCap: 'round'
+      color: '#8b5cf6', weight: 6, opacity: 0.5, lineCap: 'round'
     }).addTo(map);
   }
 
@@ -798,7 +773,7 @@ function updateInstruksi(idxTerdekat) {
   let icon = '⬆️', text = 'Lurus';
 
   if (type === 'turn') {
-    if (modifier.includes('slight left')) { icon = '↖️'; text = 'Agak Kiri sayan'; }
+    if (modifier.includes('slight left')) { icon = '↖️'; text = 'Agak Kiri sayang'; }
     else if (modifier.includes('slight right')) { icon = '↗️'; text = 'Agak Kanan sayang'; }
     else if (modifier.includes('left')) { icon = '⬅️'; text = 'Belok Kiri sayang'; }
     else if (modifier.includes('right')) { icon = '➡️'; text = 'Belok Kanan sayang'; }
@@ -815,24 +790,23 @@ function updateInstruksi(idxTerdekat) {
   document.getElementById('turnDist').textContent = distToNextTurn > 0 ? formatJarak(distToNextTurn) + ' lagi' : 'Segera';
 
   // ================= LOGIKA SUARA =================
-  // Hanya berbunyi jika instruksi berupa belokan (bukan "Lurus")
   const isTurnInstruction = (text.includes('Kiri') || text.includes('Kanan') || text.includes('Balik') || text.includes('Bundaran'));
 
   if (isTurnInstruction) {
     // 1. Peringatan 200 Meter
     if (distToNextTurn <= 210 && distToNextTurn > 190 && !belokan200SudahBerbunyi) {
-      putarSuara(`Dalam 200 meter, ${text}`);
+      putarSuara(`Dalam 200 meter, ${text} sayang`);
       belokan200SudahBerbunyi = true;
     }
     
     // 2. Peringatan 50 Meter
     if (distToNextTurn <= 60 && distToNextTurn > 40 && !belokan50SudahBerbunyi) {
-      putarSuara(`Dalam 50 meter, ${text}`);
+      putarSuara(`Dalam 50 meter, ${text} sayang`);
       belokan50SudahBerbunyi = true;
     }
   }
 
-  // Reset status suara jika instruksi berubah (misal sudah melewati belokan dan ada belokan baru)
+  // Reset status suara jika instruksi berubah
   if (text !== instruksiTerakhir) {
     instruksiTerakhir = text;
     belokan200SudahBerbunyi = false;
