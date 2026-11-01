@@ -99,6 +99,18 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
   pointer-events: none; max-width: 85%; text-align: center;
 }
 .toast.show { opacity: 1; }
+  
+  /* CSS Foto Driver */
+.foto-driver {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  margin-left: auto; /* Mendorong foto ke paling kanan */
+}
+  
 </style>
 </head>
 <body>
@@ -146,13 +158,14 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
     </div>
   </div>
 
-  <div class="instruksi-box" id="instruksiBox">
-    <div class="instruksi-icon" id="turnIcon">⬆️</div>
-    <div>
-      <div class="instruksi-text" id="turnText">Driver: SOREN SUHENDRO</div>
-      <div class="instruksi-dist" id="turnDist">-</div>
-    </div>
+ <div class="instruksi-box" id="instruksiBox">
+  <div class="instruksi-icon" id="turnIcon">⬆️</div>
+  <div style="flex: 1;">
+    <div class="instruksi-text" id="turnText">Driver: SOREN SUHENDRO</div>
+    <div class="instruksi-dist" id="turnDist">-</div>
   </div>
+  <img src="foto-driver.JPG" alt="Driver" class="foto-driver">
+</div>
 
   <button class="btn-recenter" id="btnRecenter" onclick="kembaliKePosisiSaya()">📍</button>
 
