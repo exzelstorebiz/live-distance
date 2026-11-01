@@ -111,6 +111,14 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
   margin-left: auto; /* Mendorong foto ke paling kanan */
 }
   
+  /* Trik Dark Mode Menggunakan CSS Filter */
+.leaflet-layer,
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out,
+.leaflet-control-attribution {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+  
 </style>
 </head>
 <body>
@@ -253,11 +261,10 @@ function initMap() {
     attributionControl: false
   }).setView([-6.387, 106.936], 16);
 
- // Tile Dark Mode (CartoDB Dark Matter)
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-  maxZoom: 20,
-  attribution: '&copy; OpenStreetMap &copy; CARTO'
-}).addTo(map);
+  // Tile OpenStreetMap
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19
+  }).addTo(map);
 
   L.control.zoom({ position: 'topright' }).addTo(map);
 
@@ -653,8 +660,8 @@ function gambarRuteNeon(idxTerdekat) {
   // 1. Garis Redup (Sudah dilalui)
   if (latlngsLewat.length > 1) {
     ruteLayerLewat = L.polyline(latlngsLewat, {
-  color: '#8b5cf6', weight: 6, opacity: 0.5, lineCap: 'round'
-}).addTo(map);
+      color: '#5b2b9e', weight: 6, opacity: 0.4, lineCap: 'round'
+    }).addTo(map);
   }
 
   // 2. Garis Neon (Sisa Perjalanan)
