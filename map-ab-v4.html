@@ -592,32 +592,53 @@ async function mulaiPerjalanan() {
   const tujuanInput = document.getElementById('inputTujuan').value.trim();
   if (!tujuanInput) { showToast('Tujuan belum diisi'); return; }
 
-  let parsed = parseShareLocation(tujuanInput);
-  let namaTujuan = tujuanInput;
+  document.getElementById('btnMulai').textContent = '⏳ MENCARI LOKASI...';
 
+  // Cek apakah input berupa koordinat (misal dari Tempel WA)
+  let parsed = parseShareLocation(tujuanInput);
+  
   if (parsed) {
-    namaTujuan = 'Koordinat: ' + parsed.lat.toFixed(4) + ', ' + parsed.lng.toFixed(4);
+    let namaTujuan = 'Koordinat: ' + parsed.lat.toFixed(4) + ', ' + parsed.lng.toFixed(4);
     setTujuan(parsed.lat, parsed.lng, namaTujuan);
+    prosesMulaiPerjalanan(); // Lanjut pindah halaman
   } else {
-    document.getElementById('btnMulai').textContent = '⏳ MENCARI LOKASI...';
-    try {
-      const url = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(tujuanInput) + '&format=jsonv2&limit=1&countrycodes=id';
-      const res = await fetch(url, { headers: { 'Accept-Language': 'id' } });
-      const data = await res.json();
-      
-      if (data.length > 0) {
-        setTujuan(parseFloat(data[0].lat), parseFloat(data[0].lon), data[0].display_name);
+    // Jika teks alamat, gunakan Google Geocoder (BUKAN OSM)
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: tujuanInput, region: 'ID' }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        const lokasi = results[0].geometry.location;
+        setTujuan(lokasi.lat(), lokasi.lng(), results[0].formatted_address);
+        prosesMulaiPerjalanan(); // Lanjut pindah halaman
       } else {
-        showToast('Alamat tidak ditemukan.');
+        showToast('Alamat tidak ditemukan di Google Maps.');
         document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
-        return;
       }
-    } catch (e) {
-      showToast('Gagal mencari alamat. Periksa koneksi.');
-      document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
-      return;
-    }
+    });
   }
+}
+
+// Fungsi pembantu untuk memindahkan layar & menghitung rute
+function prosesMulaiPerjalanan() {
+  document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
+  
+  // Pindah Halaman
+  document.getElementById('halamanRencana').style.display = 'none';
+  document.getElementById('halamanNavigasi').style.display = 'block';
+  
+  google.maps.event.trigger(map, 'resize');
+  if (posisiSaya) map.setCenter({ lat: posisiSaya.lat, lng: posisiSaya.lng });
+
+  document.getElementById('instruksiBox').style.display = 'flex';
+  followMode = true;
+  
+  mintaWakeLock(); 
+  hitungRuteGoogleMaps(true); 
+
+  // Suara Sapaan
+  setTimeout(() => {
+    putarSuara("Selamat menikmati perjalanan. Hati-hati selama perjalanan sayang.");
+  }, 1500); 
+}
 
   // Pindah Halaman
   document.getElementById('halamanRencana').style.display = 'none';
@@ -661,12 +682,12 @@ function setTujuan(lat, lng, nama) {
   
   if (markerTujuan) markerTujuan.setMap(null);
   
-  // Gunakan marker standar Google Maps (atau bisa diganti divIcon nanti)
+  // Pin Tujuan Kustom (Oranye)
   markerTujuan = new google.maps.Marker({
     position: { lat: lat, lng: lng },
     map: map,
     icon: {
-        url: 'https://maps.google.com/mapfiles/kml/paddle/orange-blank.png', // Pin oranye standar
+        url: 'https://maps.google.com/mapfiles/kml/paddle/orange-blank.png', 
         scaledSize: new google.maps.Size(36, 36),
         anchor: new google.maps.Point(18, 36)
     }
