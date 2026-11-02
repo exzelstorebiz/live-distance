@@ -39,6 +39,14 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 .btn-wa { background: #25D366; color: white; }
 .btn-peta { background: #7138e8; color: white; }
 
+/* Peta Mini di Halaman Rencana */
+#mapRencana { 
+  width: 100%; height: 200px; 
+  border-radius: 12px; margin-top: 10px; 
+  display: none; /* Disembunyikan dulu sebelum tujuan dipilih */
+  border: 2px solid #7138e8;
+}
+
 .btn-mulai {
   display: block; width: calc(100% - 40px); margin: 20px; padding: 16px;
   background: #7138e8; color: white; border: 0; border-radius: 12px;
@@ -82,7 +90,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
   margin-left: auto;
 }
 
-/* Indikator Kecepatan (Baru) */
+/* Indikator Kecepatan */
 .speedometer {
   position: fixed; bottom: 100px; left: 15px; z-index: 1000;
   width: 60px; height: 60px; border-radius: 50%;
@@ -139,11 +147,15 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 
     <div class="form-group">
       <label>🎯 TITIK TUJUAN</label>
-      <input type="text" id="inputTujuan" placeholder="Ketik alamat atau tempel link...">
+      <!-- ID autocompleteTujuan digunakan untuk fitur Autocomplete Google -->
+      <input type="text" id="inputTujuan" placeholder="Ketik alamat tujuan...">
       <div class="btn-group">
         <button class="btn-wa" onclick="tempelWA()">📋 Tempel WA</button>
         <button class="btn-peta" onclick="pilihDiPeta()">🗺️ Pilih di Peta</button>
       </div>
+      
+      <!-- Peta Mini untuk Pratinjau Tujuan -->
+      <div id="mapRencana"></div>
     </div>
   </div>
 
@@ -176,7 +188,6 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
     <img src="foto-driver.JPG" alt="Driver" class="foto-driver">
   </div>
 
-  <!-- Indikator Kecepatan -->
   <div class="speedometer">
     <div class="speed-val" id="speedVal">0</div>
     <div class="speed-unit">km/j</div>
@@ -205,8 +216,10 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 <!-- PENTING: GANTI 'DEMO_KEY_ANDA_DI_SINI' DENGAN DEMO KEY GOOGLE MAPS ANDA -->
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDK9ZxptmIAM_-dtUzYaUYIWiclfpbAj9E&libraries=places,geometry&callback=initMap" async defer></script>
 <script>
+// Kode JavaScript Bagian 2 & 3 menyusul
 // ================= STATE =================
-let map;
+let map;        // Peta Utama (Halaman 2)
+let mapRencana; // Peta Mini (Halaman 1)
 let posisiSaya = null;
 let titikTujuan = null;
 let followMode = true;
@@ -216,6 +229,7 @@ let heading = 0;
 // Marker & Objek Google Maps
 let markerSaya = null;
 let markerTujuan = null;
+let markerTujuanRencana = null; // Pin di peta mini
 let circleAkurasi = null;
 
 // Layer Rute
@@ -244,26 +258,58 @@ let belokan50SudahBerbunyi = false;
 
 // ================= INIT MAP (GOOGLE MAPS) =================
 function initMap() {
-  // Koordinat awal (default Jakarta)
   const defaultLoc = { lat: -6.387, lng: 106.936 };
 
+  // 1. Inisialisasi Peta Utama (Halaman 2)
   map = new google.maps.Map(document.getElementById("map"), {
     center: defaultLoc,
     zoom: 17,
-    disableDefaultUI: true, // Menyembunyikan tombol bawaan Google Maps
-    gestureHandling: "greedy", // Responsif saat layar disentuh
-    heading: 0, // Untuk rotasi peta
-    tilt: 0     // 0 = tegak lurus ke bawah (top-down)
+    disableDefaultUI: true,
+    gestureHandling: "greedy",
+    heading: 0,
+    tilt: 0
   });
 
-  // Deteksi jika peta digeser manual
+  // 2. Inisialisasi Peta Mini (Halaman 1)
+  mapRencana = new google.maps.Map(document.getElementById("mapRencana"), {
+    center: defaultLoc,
+    zoom: 15,
+    disableDefaultUI: true,
+    gestureHandling: "none" // Kunci geser peta mini agar tidak mengganggu scroll
+  });
+
+  // 3. Fitur Autocomplete Google Maps
+  const autocomplete = new google.maps.places.Autocomplete(
+    document.getElementById("inputTujuan"),
+    { componentRestrictions: { country: "id" }, fields: ["geometry", "formatted_address", "name"] }
+  );
+
+  // Event saat alamat dipilih dari Autocomplete
+  autocomplete.addListener("place_changed", () => {
+    const place = autocomplete.getPlace();
+    if (!place.geometry || !place.geometry.location) {
+      showToast("Alamat tidak memiliki koordinat.");
+      return;
+    }
+
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+    const nama = place.formatted_address || place.name;
+
+    // Set Tujuan & Tampilkan di Peta Mini
+    setTujuan(lat, lng, nama);
+    tampilkanPetaRencana(lat, lng);
+    cekFormRencana();
+  });
+
+  // Event jika peta digeser manual
   map.addListener('dragstart', function() {
     followMode = false;
     const btn = document.getElementById('btnRecenter');
     if (btn) btn.style.background = '#7138e8'; 
   });
 
-  // Deteksi klik peta (Pilih di Peta)
+  // Event klik peta (Pilih di Peta)
   map.addListener('click', function(e) {
     if (!modePilihTujuan) return;
     modePilihTujuan = false;
@@ -273,14 +319,43 @@ function initMap() {
     
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
+    setTujuan(lat, lng, 'Titik dari Peta');
     document.getElementById('inputTujuan').value = lat.toFixed(6) + ', ' + lng.toFixed(6);
     
+    // Tampilkan di peta mini
+    setTimeout(() => { tampilkanPetaRencana(lat, lng); }, 100);
+
     showToast('Lokasi tujuan dipilih dari peta');
     cekFormRencana();
   });
 
-  // Mulai GPS setelah peta siap
+  // Mulai GPS setelah semua peta siap
   mulaiGPS();
+}
+
+// ================= FUNGSI PETA MINI =================
+function tampilkanPetaRencana(lat, lng) {
+  const container = document.getElementById('mapRencana');
+  container.style.display = 'block';
+  
+  // Wajib me-refresh ukuran peta Google Maps jika div tadinya tersembunyi
+  google.maps.event.trigger(mapRencana, 'resize');
+  
+  const lokasi = { lat: lat, lng: lng };
+  mapRencana.setCenter(lokasi);
+  mapRencana.setZoom(16);
+
+  // Hapus marker lama, buat marker baru
+  if (markerTujuanRencana) markerTujuanRencana.setMap(null);
+  markerTujuanRencana = new google.maps.Marker({
+    position: lokasi,
+    map: mapRencana,
+    icon: {
+        url: 'https://maps.google.com/mapfiles/kml/paddle/orange-blank.png', 
+        scaledSize: new google.maps.Size(36, 36),
+        anchor: new google.maps.Point(18, 36)
+    }
+  });
 }
 
 // ================= GPS & UPDATE POSISI =================
@@ -360,8 +435,6 @@ function onPosition(position) {
   // Kunci peta di tengah & putar peta
   if (followMode) {
     map.panTo({ lat: lat, lng: lng });
-    // Rotasi Peta: 0 derajat = Utara di atas. 
-    // Jika Anda ingin arah gerak selalu ke atas, gunakan `heading` (heading: heading)
     map.setHeading(heading); 
   }
 }
@@ -380,7 +453,6 @@ function hitungKecepatan(lat, lng) {
     const dLat = lat - lastPosForSpeed.lat;
     const dLng = lng - lastPosForSpeed.lng;
     
-    // Jarak dalam meter (Rumus Haversine sederhana)
     const R = 6371000;
     const dLatRad = dLat * Math.PI / 180;
     const dLngRad = dLng * Math.PI / 180;
@@ -388,13 +460,9 @@ function hitungKecepatan(lat, lng) {
     const jarak = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     
     const waktuDetik = (now - lastTimeForSpeed) / 1000;
-    if (waktuDetik > 0.5) { // Minimal update tiap 0.5 detik
-      // Kecepatan m/s ke km/jam
+    if (waktuDetik > 0.5) { 
       let kecepatan = (jarak / waktuDetik) * 3.6;
-      
-      // Filter jika kecepatan tidak wajar (misal GPS melompat > 200 km/jam)
       if (kecepatan > 200) kecepatan = 0;
-      
       document.getElementById('speedVal').textContent = Math.round(kecepatan);
       
       lastPosForSpeed = { lat: lat, lng: lng };
@@ -412,14 +480,12 @@ function updateHeading(lat, lng) {
     const dLng = lng - window._lastPosHeading.lng;
     const dist = Math.sqrt(dLat * dLat + dLng * dLng);
     
-    if (dist > 0.00003) { // Bergerak > ~3 meter
+    if (dist > 0.00003) { 
       const bearing = Math.atan2(dLng * Math.cos(lat * Math.PI / 180), dLat) * 180 / Math.PI;
       heading = (bearing + 360) % 360;
       
-      // Putar ikon mobil menggunakan rotasi SVG di dalam Marker
       const mobilEl = document.querySelector('img[src="mobil.png"]');
       if (mobilEl) {
-         // Trik CSS rotate untuk marker icon
          mobilEl.style.transform = 'rotate(' + heading + 'deg)';
          mobilEl.style.transformOrigin = 'center center';
       }
@@ -430,8 +496,7 @@ function updateHeading(lat, lng) {
     window._lastPosHeading = { lat: lat, lng: lng };
   }
 }
-
-// ================= UTIL UI =================
+  // ================= UTIL UI =================
 function showToast(msg, duration) {
   duration = duration || 2500;
   const t = document.getElementById('toast');
@@ -479,7 +544,8 @@ document.addEventListener('visibilitychange', async () => {
     }
   }
 });
-  // ================= FITUR SUARA (TEXT-TO-SPEECH) =================
+
+// ================= FITUR SUARA (TEXT-TO-SPEECH) =================
 function muatSuara() {
   const daftarSuara = window.speechSynthesis.getVoices();
   let suaraID = daftarSuara.filter(s => s.lang.includes('id') || s.lang.includes('ID'));
@@ -515,7 +581,7 @@ function cekFormRencana() {
   const tujuan = document.getElementById('inputTujuan').value;
   const btnMulai = document.getElementById('btnMulai');
   
-  if (awal && awal !== 'Mencari GPS...' && tujuan.length > 3) {
+  if (awal && awal !== 'Mencari GPS...' && tujuan.length > 3 && titikTujuan !== null) {
     btnMulai.disabled = false;
   } else {
     btnMulai.disabled = true;
@@ -543,6 +609,8 @@ async function tempelWA() {
     const parsed = parseShareLocation(text);
     if (parsed) {
       document.getElementById('inputTujuan').value = parsed.lat.toFixed(6) + ', ' + parsed.lng.toFixed(6);
+      setTujuan(parsed.lat, parsed.lng, 'Koordinat dari WA');
+      tampilkanPetaRencana(parsed.lat, parsed.lng);
       showToast('Koordinat berhasil diambil');
       cekFormRencana();
     } else if (text.includes('http')) {
@@ -550,13 +618,15 @@ async function tempelWA() {
       const extracted = await resolveGoogleMapsLink(text);
       if (extracted) {
         document.getElementById('inputTujuan').value = extracted.lat.toFixed(6) + ', ' + extracted.lng.toFixed(6);
+        setTujuan(extracted.lat, extracted.lng, 'Link dari WA');
+        tampilkanPetaRencana(extracted.lat, extracted.lng);
         cekFormRencana();
       } else {
         showToast('Link terlalu rumit. Harap ketik nama jalan/alamatnya.');
       }
     } else {
       document.getElementById('inputTujuan').value = text;
-      showToast('Teks alamat terdeteksi. Klik MULAI untuk mencari.');
+      showToast('Teks alamat terdeteksi. Pilih dari saran Autocomplete.');
       cekFormRencana();
     }
   } catch (err) {
@@ -580,7 +650,6 @@ function pilihDiPeta() {
   document.getElementById('halamanNavigasi').style.display = 'block';
   modePilihTujuan = true;
   
-  // Refresh peta Google Maps jika ukurannya berubah
   google.maps.event.trigger(map, 'resize');
   if (posisiSaya) map.setCenter({ lat: posisiSaya.lat, lng: posisiSaya.lng });
   
@@ -589,39 +658,14 @@ function pilihDiPeta() {
 
 // ================= MULAI & BATAL PERJALANAN =================
 async function mulaiPerjalanan() {
-  const tujuanInput = document.getElementById('inputTujuan').value.trim();
-  if (!tujuanInput) { showToast('Tujuan belum diisi'); return; }
-
-  document.getElementById('btnMulai').textContent = '⏳ MENCARI LOKASI...';
-
-  // Cek apakah input berupa koordinat (misal dari Tempel WA)
-  let parsed = parseShareLocation(tujuanInput);
-  
-  if (parsed) {
-    let namaTujuan = 'Koordinat: ' + parsed.lat.toFixed(4) + ', ' + parsed.lng.toFixed(4);
-    setTujuan(parsed.lat, parsed.lng, namaTujuan);
-    prosesMulaiPerjalanan(); // Lanjut pindah halaman
-  } else {
-    // Jika teks alamat, gunakan Google Geocoder (BUKAN OSM)
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: tujuanInput, region: 'ID' }, (results, status) => {
-      if (status === 'OK' && results[0]) {
-        const lokasi = results[0].geometry.location;
-        setTujuan(lokasi.lat(), lokasi.lng(), results[0].formatted_address);
-        prosesMulaiPerjalanan(); // Lanjut pindah halaman
-      } else {
-        showToast('Alamat tidak ditemukan di Google Maps.');
-        document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
-      }
-    });
+  if (!titikTujuan) {
+    showToast('Silakan pilih alamat tujuan dari daftar saran (Autocomplete).');
+    return;
   }
-}
 
-// Fungsi pembantu untuk memindahkan layar & menghitung rute
-function prosesMulaiPerjalanan() {
-  document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
-  
-  // Pindah Halaman
+  document.getElementById('btnMulai').textContent = '⏳ MENYIAPKAN RUTE...';
+
+  // Pindah Halaman & Siapkan Peta Utama
   document.getElementById('halamanRencana').style.display = 'none';
   document.getElementById('halamanNavigasi').style.display = 'block';
   
@@ -637,25 +681,7 @@ function prosesMulaiPerjalanan() {
   // Suara Sapaan
   setTimeout(() => {
     putarSuara("Selamat menikmati perjalanan. Hati-hati selama perjalanan sayang.");
-  }, 1500); 
-}
-
-  // Pindah Halaman
-  document.getElementById('halamanRencana').style.display = 'none';
-  document.getElementById('halamanNavigasi').style.display = 'block';
-  
-  google.maps.event.trigger(map, 'resize');
-  if (posisiSaya) map.setCenter({ lat: posisiSaya.lat, lng: posisiSaya.lng });
-
-  document.getElementById('instruksiBox').style.display = 'flex';
-  followMode = true;
-  
-  mintaWakeLock(); 
-  hitungRuteGoogleMaps(true); 
-
-  // Suara Sapaan
-  setTimeout(() => {
-    putarSuara("Selamat menikmati perjalanan. Hati-hati selama perjalanan sayang.");
+    document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
   }, 1500); 
 }
 
@@ -667,12 +693,13 @@ function batalPerjalanan() {
   document.getElementById('halamanRencana').style.display = 'flex';
   document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
   
+  // Hapus semua garis & marker tujuan dari peta utama
   if (markerTujuan) markerTujuan.setMap(null);
   if (rutePolylineGlow) rutePolylineGlow.setMap(null);
   if (rutePolylineCore) rutePolylineCore.setMap(null);
   if (rutePolylineLewat) rutePolylineLewat.setMap(null);
   
-  titikTujuan = null;
+  // Jangan hapus titikTujuan agar peta mini di halaman 1 masih menampilkan pin
   ruteAsli = [];
 }
 
@@ -693,8 +720,7 @@ function setTujuan(lat, lng, nama) {
     }
   });
 }
-
-// ================= LOGIKA RUTE GOOGLE MAPS =================
+  // ================= LOGIKA RUTE GOOGLE MAPS =================
 function cekPosisiDiRute() {
   if (!posisiSaya || ruteAsli.length === 0) return;
 
@@ -911,7 +937,12 @@ function formatJarak(meter) {
 // ================= START APLIKASI =================
 document.addEventListener('DOMContentLoaded', function() {
   // initMap() dipanggil oleh callback Google Maps API
-  document.getElementById('inputTujuan').addEventListener('input', cekFormRencana);
+  document.getElementById('inputTujuan').addEventListener('input', function() {
+    // Jika user mengetik manual (bukan memilih dari autocomplete), reset tujuan lama
+    // agar tidak terjadi ketidaksesuaian antara teks dan rute
+    titikTujuan = null; 
+    cekFormRencana();
+  });
 });
 </script>
 </body>
