@@ -749,7 +749,10 @@ function cekPosisiDiRute() {
 }
 
 async function hitungRuteGoogleMaps(force) {
-  if (!posisiSaya || !titikTujuan) return;
+  if (!posisiSaya || !titikTujuan) {
+    console.warn("Rute gagal: Posisi atau Tujuan belum siap.");
+    return;
+  }
   if (calcInProgress) return;
 
   const now = Date.now();
@@ -757,17 +760,20 @@ async function hitungRuteGoogleMaps(force) {
   lastRuteCalc = now;
   calcInProgress = true;
 
+  console.log("Meminta rute ke Google Maps...");
   const directionsService = new google.maps.DirectionsService();
 
   directionsService.route(
     {
-      origin: { lat: posisiSaya.lat, lng: posisiSaya.lng },
-      destination: { lat: titikTujuan.lat, lng: titikTujuan.lng },
+      origin: new google.maps.LatLng(posisiSaya.lat, posisiSaya.lng),
+      destination: new google.maps.LatLng(titikTujuan.lat, titikTujuan.lng),
       travelMode: google.maps.TravelMode.DRIVING
     },
     (response, status) => {
       calcInProgress = false;
+      
       if (status === 'OK') {
+        console.log("Rute berhasil didapatkan!");
         ruteData = response.routes[0];
         
         // Ambil semua koordinat jalan dari Google Maps
@@ -783,8 +789,8 @@ async function hitungRuteGoogleMaps(force) {
         updateInfoJarakDariIdx(0);
         updateInstruksi(0);
       } else {
-        showToast('Gagal menghitung rute Google Maps.');
         console.error('Directions error:', status);
+        showToast('Gagal menghitung rute. Cek koneksi atau API Key.');
       }
     }
   );
