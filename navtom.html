@@ -2480,15 +2480,19 @@ function gambarRuteNeon(idxTerdekat) {
 
   if (!map.isStyleLoaded()) {
 
-    map.once("load", function() {
+  map.once("idle", function() {
+
+    if (map && map.isStyleLoaded()) {
 
       gambarRuteNeon(idxTerdekat);
 
-    });
+    }
 
-    return;
+  });
 
-  }
+  return;
+
+}
 
   siapkanLayerPeta(map);
 
