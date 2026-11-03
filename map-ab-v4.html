@@ -560,7 +560,8 @@ function cekFormRencana() {
   const tujuan = document.getElementById('inputTujuan').value;
   const btnMulai = document.getElementById('btnMulai');
   
-  if (awal && awal !== 'Mencari GPS...' && tujuan.length > 3 && titikTujuan !== null) {
+  // PERBAIKAN: Hapus syarat 'titikTujuan !== null' agar tombol aktif saat diketik manual
+  if (awal && awal !== 'Mencari GPS...' && tujuan.length > 3) {
     btnMulai.disabled = false;
   } else {
     btnMulai.disabled = true;
