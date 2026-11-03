@@ -946,16 +946,93 @@ function initMap() {
 
   });
 
+function initMap() {
+  if (!tomtomSiap()) {
+    showToast("Isi TOMTOM_API_KEY terlebih dahulu pada bagian konfigurasi.");
+    return;
+  }
+  if (!window.maplibregl) {
+    showToast("Library peta gagal dimuat. Periksa koneksi internet.");
+    return;
+  }
+
+  // PETA UTAMA
+  map = new maplibregl.Map({
+    container: "map",
+    style: TOMTOM_STYLE_URL,
+    center: [106.936, -6.387],
+    zoom: 16,
+    attributionControl: true,
+    pitchWithRotate: false
+  });
+
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+
+  map.on("load", function() {
+    siapkanLayerPeta(map);
+    if (posisiSaya) perbaruiMarkerGPS();
+  });
+
+  // DETEKSI PETA DIGESER MANUAL
+  map.on("dragstart", function() {
+    followMode = false;
+    const btn = document.getElementById("btnRecenter");
+    if (btn) btn.style.background = "#7138e8";
+  });
+  map.on("zoomstart", function() { followMode = false; });
+  map.on("rotatestart", function() { followMode = false; });
+  map.on("pitchstart", function() { followMode = false; });
+  
+  map.on("error", function(e) {
+    console.error("MapLibre error:", e.error || e);
+  });
+
+  // KLIK PETA UNTUK MEMILIH TUJUAN
+  map.on("click", function(e) {
+    if (!modePilihTujuan) return;
+    modePilihTujuan = false;
+    document.getElementById("halamanNavigasi").style.display = "none";
+    document.getElementById("halamanRencana").style.display = "flex";
+    
+    const lat = e.lngLat.lat;
+    const lng = e.lngLat.lng;
+    setTujuan(lat, lng, "Titik dari Peta");
+    document.getElementById("inputTujuan").value = lat.toFixed(6) + ", " + lng.toFixed(6);
+    
+    setTimeout(function() { tampilkanPetaRencana(lat, lng); }, 150);
+    showToast("Lokasi tujuan dipilih dari peta");
+    cekFormRencana();
+  });
+
+  // PETA MINI RENCANA
+  mapRencana = new maplibregl.Map({
+    container: "mapRencana",
+    style: TOMTOM_STYLE_URL,
+    center: [106.936, -6.387],
+    zoom: 15,
+    attributionControl: false,
+    interactive: true
+  });
+
+  mapRencana.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+
   mapRencana.on("load", function() {
+    if (posisiSaya) mapRencana.setCenter([posisiSaya.lng, posisiSaya.lat]);
+    if (titikTujuan) perbaruiMarkerTujuanRencana();
+  });
 
-    if (titikTujuan) {
-      perbaruiMarkerTujuanRencana();
-    }
-
+  // KLIK PETA MINI UNTUK MEMILIH TUJUAN (Saat modePilihTujuan aktif)
+  mapRencana.on("click", function(e) {
+    if (!modePilihTujuan) return;
+    const lat = e.lngLat.lat;
+    const lng = e.lngLat.lng;
+    setTujuan(lat, lng, "Titik dari Peta");
+    document.getElementById("inputTujuan").value = lat.toFixed(6) + ", " + lng.toFixed(6);
+    showToast("Lokasi tujuan dipilih");
+    cekFormRencana();
   });
 
   mulaiGPS();
-
 }
 
 // ============================================================
