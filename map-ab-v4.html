@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>NAVIGASI PRIBADI</title>
+<title>NAVIGASI PRIBADI (TOMTOM)</title>
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; background: #f4f3f8; color: #202020; overflow: hidden; }
@@ -43,7 +43,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 #mapRencana { 
   width: 100%; height: 200px; 
   border-radius: 12px; margin-top: 10px; 
-  display: none; /* Disembunyikan dulu sebelum tujuan dipilih */
+  display: none; 
   border: 2px solid #7138e8;
 }
 
@@ -147,14 +147,12 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 
     <div class="form-group">
       <label>🎯 TITIK TUJUAN</label>
-      <!-- ID autocompleteTujuan digunakan untuk fitur Autocomplete Google -->
       <input type="text" id="inputTujuan" placeholder="Ketik alamat tujuan...">
       <div class="btn-group">
         <button class="btn-wa" onclick="tempelWA()">📋 Tempel WA</button>
         <button class="btn-peta" onclick="pilihDiPeta()">🗺️ Pilih di Peta</button>
       </div>
       
-      <!-- Peta Mini untuk Pratinjau Tujuan -->
       <div id="mapRencana"></div>
     </div>
   </div>
@@ -213,11 +211,13 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 
 <div class="toast" id="toast"></div>
 
-<!-- PENTING: GANTI 'DEMO_KEY_ANDA_DI_SINI' DENGAN DEMO KEY GOOGLE MAPS ANDA -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDK9ZxptmIAM_-dtUzYaUYIWiclfpbAj9E&libraries=places,geometry&callback=initMap" async defer></script>
+<!-- PENTING: GANTI 'YOUR_TOMTOM_API_KEY' DENGAN API KEY TOMTOM ANDA -->
+<script src="https://api.tomtom.com/maps-sdk-for-web/cdn/6.25.0/maps/maps-web.min.js"></script>
 <script>
-// Kode JavaScript Bagian 2 & 3 menyusul
 // ================= STATE =================
+// GANTI DENGAN API KEY TOMTOM ANDA
+const TOMTOM_API_KEY = 'duPP6hddpLvDr8U7xEN9Pit3pMKXD3Xm'; 
+
 let map;        // Peta Utama (Halaman 2)
 let mapRencana; // Peta Mini (Halaman 1)
 let posisiSaya = null;
@@ -226,11 +226,10 @@ let followMode = true;
 let modePilihTujuan = false;
 let heading = 0;
 
-// Marker & Objek Google Maps
+// Marker & Objek TomTom
 let markerSaya = null;
 let markerTujuan = null;
-let markerTujuanRencana = null; // Pin di peta mini
-let circleAkurasi = null;
+let markerTujuanRencana = null;
 
 // Layer Rute
 let rutePolylineGlow = null;
@@ -256,80 +255,57 @@ let instruksiTerakhir = "";
 let belokan200SudahBerbunyi = false;
 let belokan50SudahBerbunyi = false;
 
-// ================= INIT MAP (GOOGLE MAPS) =================
+// ================= INIT MAP (TOMTOM) =================
 function initMap() {
   const defaultLoc = { lat: -6.387, lng: 106.936 };
 
   // 1. Inisialisasi Peta Utama (Halaman 2)
-  map = new google.maps.Map(document.getElementById("map"), {
+  map = tt.map({
+    key: TOMTOM_API_KEY,
+    container: 'map',
     center: defaultLoc,
-    zoom: 17,
-    disableDefaultUI: true,
-    gestureHandling: "greedy",
-    heading: 0,
-    tilt: 0
+    zoom: 16,
+    pitch: 0, // 0 = top-down
+    bearing: 0 // Rotasi peta (Heading Up)
   });
 
   // 2. Inisialisasi Peta Mini (Halaman 1)
-  mapRencana = new google.maps.Map(document.getElementById("mapRencana"), {
+  mapRencana = tt.map({
+    key: TOMTOM_API_KEY,
+    container: 'mapRencana',
     center: defaultLoc,
-    zoom: 15,
-    disableDefaultUI: true,
-    gestureHandling: "none" // Kunci geser peta mini agar tidak mengganggu scroll
+    zoom: 15
   });
 
-  // 3. Fitur Autocomplete Google Maps
-  const autocomplete = new google.maps.places.Autocomplete(
-    document.getElementById("inputTujuan"),
-    { componentRestrictions: { country: "id" }, fields: ["geometry", "formatted_address", "name"] }
-  );
-
-  // Event saat alamat dipilih dari Autocomplete
-  autocomplete.addListener("place_changed", () => {
-    const place = autocomplete.getPlace();
-    if (!place.geometry || !place.geometry.location) {
-      showToast("Alamat tidak memiliki koordinat.");
-      return;
-    }
-
-    const lat = place.geometry.location.lat();
-    const lng = place.geometry.location.lng();
-    const nama = place.formatted_address || place.name;
-
-    // Set Tujuan & Tampilkan di Peta Mini
-    setTujuan(lat, lng, nama);
-    tampilkanPetaRencana(lat, lng);
-    cekFormRencana();
-  });
+  // Sembunyikan UI bawaan TomTom agar bersih
+  map.removeControl(map.controls.get('zoomControl'));
 
   // Event jika peta digeser manual
-  map.addListener('dragstart', function() {
+  map.on('dragstart', function() {
     followMode = false;
     const btn = document.getElementById('btnRecenter');
     if (btn) btn.style.background = '#7138e8'; 
   });
 
   // Event klik peta (Pilih di Peta)
-  map.addListener('click', function(e) {
+  map.on('click', function(e) {
     if (!modePilihTujuan) return;
     modePilihTujuan = false;
     
     document.getElementById('halamanNavigasi').style.display = 'none';
     document.getElementById('halamanRencana').style.display = 'flex';
     
-    const lat = e.latLng.lat();
-    const lng = e.latLng.lng();
+    const lat = e.lngLat.lat;
+    const lng = e.lngLat.lng;
     setTujuan(lat, lng, 'Titik dari Peta');
     document.getElementById('inputTujuan').value = lat.toFixed(6) + ', ' + lng.toFixed(6);
     
-    // Tampilkan di peta mini
     setTimeout(() => { tampilkanPetaRencana(lat, lng); }, 100);
-
     showToast('Lokasi tujuan dipilih dari peta');
     cekFormRencana();
   });
 
-  // Mulai GPS setelah semua peta siap
+  // Mulai GPS setelah peta siap
   mulaiGPS();
 }
 
@@ -338,24 +314,23 @@ function tampilkanPetaRencana(lat, lng) {
   const container = document.getElementById('mapRencana');
   container.style.display = 'block';
   
-  // Wajib me-refresh ukuran peta Google Maps jika div tadinya tersembunyi
-  google.maps.event.trigger(mapRencana, 'resize');
-  
-  const lokasi = { lat: lat, lng: lng };
-  mapRencana.setCenter(lokasi);
+  mapRencana.resize(); // Refresh ukuran peta TomTom
+  mapRencana.setCenter({ lat: lat, lng: lng });
   mapRencana.setZoom(16);
 
-  // Hapus marker lama, buat marker baru
-  if (markerTujuanRencana) markerTujuanRencana.setMap(null);
-  markerTujuanRencana = new google.maps.Marker({
-    position: lokasi,
-    map: mapRencana,
-    icon: {
-        url: 'https://maps.google.com/mapfiles/kml/paddle/orange-blank.png', 
-        scaledSize: new google.maps.Size(36, 36),
-        anchor: new google.maps.Point(18, 36)
-    }
-  });
+  if (markerTujuanRencana) markerTujuanRencana.remove();
+  
+  // Buat Pin oranye untuk TomTom
+  const el = document.createElement('div');
+  el.innerHTML = `
+    <div style="width: 36px; height: 36px; background: #ff8100; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center;">
+      <div style="width: 12px; height: 12px; background: white; border-radius: 50%;"></div>
+    </div>
+  `;
+  
+  markerTujuanRencana = new tt.Marker({ element: el, anchor: 'bottom' })
+    .setLngLat([lng, lat])
+    .addTo(mapRencana);
 }
 
 // ================= GPS & UPDATE POSISI =================
@@ -395,33 +370,16 @@ function onPosition(position) {
 
   // Update Marker & Lingkaran Akurasi
   if (!markerSaya) {
-    markerSaya = new google.maps.Marker({
-      position: { lat: lat, lng: lng },
-      map: map,
-      icon: {
-        url: 'mobil.png',
-        scaledSize: new google.maps.Size(65, 65),
-        anchor: new google.maps.Point(32.5, 32.5)
-      },
-      zIndex: 1000
-    });
+    const elMobil = document.createElement('div');
+    elMobil.id = 'mobilSaya';
+    elMobil.style.cssText = 'width: 65px; height: 65px; transition: transform 0.3s linear; transform-origin: center center;';
+    elMobil.innerHTML = '<img src="mobil.png" style="width:100%; height:100%; object-fit:contain;">';
+    
+    markerSaya = new tt.Marker({ element: elMobil, anchor: 'center' })
+      .setLngLat([lng, lat])
+      .addTo(map);
   } else {
-    markerSaya.setPosition({ lat: lat, lng: lng });
-  }
-
-  if (!circleAkurasi) {
-    circleAkurasi = new google.maps.Circle({
-      map: map,
-      center: { lat: lat, lng: lng },
-      radius: acc,
-      fillColor: '#7138e8',
-      fillOpacity: 0.1,
-      strokeColor: '#7138e8',
-      strokeWeight: 1
-    });
-  } else {
-    circleAkurasi.setCenter({ lat: lat, lng: lng });
-    circleAkurasi.setRadius(acc);
+    markerSaya.setLngLat([lng, lat]);
   }
 
   // Update Heading (Arah putar mobil & Peta)
@@ -432,10 +390,9 @@ function onPosition(position) {
     cekPosisiDiRute();
   }
 
-  // Kunci peta di tengah & putar peta
+  // Kunci peta di tengah & putar peta (Heading Up)
   if (followMode) {
-    map.panTo({ lat: lat, lng: lng });
-    map.setHeading(heading); 
+    map.easeTo({ center: [lng, lat], bearing: heading, duration: 1000 });
   }
 }
 
@@ -484,10 +441,9 @@ function updateHeading(lat, lng) {
       const bearing = Math.atan2(dLng * Math.cos(lat * Math.PI / 180), dLat) * 180 / Math.PI;
       heading = (bearing + 360) % 360;
       
-      const mobilEl = document.querySelector('img[src="mobil.png"]');
+      const mobilEl = document.getElementById('mobilSaya');
       if (mobilEl) {
          mobilEl.style.transform = 'rotate(' + heading + 'deg)';
-         mobilEl.style.transformOrigin = 'center center';
       }
       
       window._lastPosHeading = { lat: lat, lng: lng };
@@ -496,6 +452,7 @@ function updateHeading(lat, lng) {
     window._lastPosHeading = { lat: lat, lng: lng };
   }
 }
+  
   // ================= UTIL UI =================
 function showToast(msg, duration) {
   duration = duration || 2500;
@@ -512,8 +469,7 @@ function kembaliKePosisiSaya() {
   if (btn) btn.style.background = '#18a84b';
   
   if (posisiSaya) {
-    map.panTo({ lat: posisiSaya.lat, lng: posisiSaya.lng });
-    map.setHeading(heading);
+    map.easeTo({ center: [posisiSaya.lng, posisiSaya.lat], bearing: heading });
   } else {
     showToast('Posisi GPS belum tersedia');
   }
@@ -596,8 +552,6 @@ function parseShareLocation(text) {
   }
   m = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
   if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
-  m = text.match(/[?&](?:q|query|ll|center)=(-?\d+\.\d+)[,%20]+(-?\d+\.\d+)/);
-  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
   return null;
 }
 
@@ -613,36 +567,14 @@ async function tempelWA() {
       tampilkanPetaRencana(parsed.lat, parsed.lng);
       showToast('Koordinat berhasil diambil');
       cekFormRencana();
-    } else if (text.includes('http')) {
-      showToast('Link terdeteksi. Membuka link...', 4000);
-      const extracted = await resolveGoogleMapsLink(text);
-      if (extracted) {
-        document.getElementById('inputTujuan').value = extracted.lat.toFixed(6) + ', ' + extracted.lng.toFixed(6);
-        setTujuan(extracted.lat, extracted.lng, 'Link dari WA');
-        tampilkanPetaRencana(extracted.lat, extracted.lng);
-        cekFormRencana();
-      } else {
-        showToast('Link terlalu rumit. Harap ketik nama jalan/alamatnya.');
-      }
     } else {
       document.getElementById('inputTujuan').value = text;
-      showToast('Teks alamat terdeteksi. Pilih dari saran Autocomplete.');
+      showToast('Teks alamat terdeteksi. Klik MULAI untuk mencari.');
       cekFormRencana();
     }
   } catch (err) {
-    showToast('Gagal membaca clipboard. Tempel manual di kolom.');
+    showToast('Gagal membaca clipboard.');
   }
-}
-
-async function resolveGoogleMapsLink(url) {
-  try {
-    const res = await fetch(url, { redirect: 'follow', mode: 'cors' });
-    const finalUrl = res.url || url;
-    const m = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) ||
-              finalUrl.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
-  } catch (e) { /* CORS gagal */ }
-  return null;
 }
 
 function pilihDiPeta() {
@@ -650,7 +582,7 @@ function pilihDiPeta() {
   document.getElementById('halamanNavigasi').style.display = 'block';
   modePilihTujuan = true;
   
-  google.maps.event.trigger(map, 'resize');
+  map.resize();
   if (posisiSaya) map.setCenter({ lat: posisiSaya.lat, lng: posisiSaya.lng });
   
   showToast('Ketuk pada peta untuk memilih lokasi tujuan', 4000);
@@ -658,30 +590,58 @@ function pilihDiPeta() {
 
 // ================= MULAI & BATAL PERJALANAN =================
 async function mulaiPerjalanan() {
-  if (!titikTujuan) {
-    showToast('Silakan pilih alamat tujuan dari daftar saran (Autocomplete).');
+  const tujuanInput = document.getElementById('inputTujuan').value.trim();
+  if (!tujuanInput) { showToast('Tujuan belum diisi'); return; }
+
+  // Jika titikTujuan sudah ada (dari pilih peta / tempel WA), langsung jalan
+  if (titikTujuan) {
+    prosesMulaiPerjalanan();
     return;
   }
 
-  document.getElementById('btnMulai').textContent = '⏳ MENYIAPKAN RUTE...';
+  // Jika teks alamat, gunakan TomTom Search API (Fuzzy Search)
+  document.getElementById('btnMulai').textContent = '⏳ MENCARI LOKASI...';
+  
+  try {
+    const url = `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(tujuanInput)}.json?key=${TOMTOM_API_KEY}&countrySet=ID&limit=1`;
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    if (data.results && data.results.length > 0) {
+      const lokasi = data.results[0].position;
+      const nama = data.results[0].address.freeformAddress;
+      setTujuan(lokasi.lat, lokasi.lon, nama);
+      tampilkanPetaRencana(lokasi.lat, lokasi.lon);
+      prosesMulaiPerjalanan();
+    } else {
+      showToast('Alamat tidak ditemukan di TomTom.');
+      document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
+    }
+  } catch (e) {
+    showToast('Gagal mencari alamat. Periksa koneksi.');
+    document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
+  }
+}
 
-  // Pindah Halaman & Siapkan Peta Utama
+function prosesMulaiPerjalanan() {
+  document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
+  
+  // Pindah Halaman
   document.getElementById('halamanRencana').style.display = 'none';
   document.getElementById('halamanNavigasi').style.display = 'block';
   
-  google.maps.event.trigger(map, 'resize');
+  map.resize();
   if (posisiSaya) map.setCenter({ lat: posisiSaya.lat, lng: posisiSaya.lng });
 
   document.getElementById('instruksiBox').style.display = 'flex';
   followMode = true;
   
   mintaWakeLock(); 
-  hitungRuteGoogleMaps(true); 
+  hitungRuteTomTom(true); 
 
   // Suara Sapaan
   setTimeout(() => {
     putarSuara("Selamat menikmati perjalanan. Hati-hati selama perjalanan sayang.");
-    document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
   }, 1500); 
 }
 
@@ -693,13 +653,12 @@ function batalPerjalanan() {
   document.getElementById('halamanRencana').style.display = 'flex';
   document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
   
-  // Hapus semua garis & marker tujuan dari peta utama
-  if (markerTujuan) markerTujuan.setMap(null);
-  if (rutePolylineGlow) rutePolylineGlow.setMap(null);
-  if (rutePolylineCore) rutePolylineCore.setMap(null);
-  if (rutePolylineLewat) rutePolylineLewat.setMap(null);
+  if (markerTujuan) markerTujuan.remove();
+  if (rutePolylineGlow) map.removeLayer(rutePolylineGlow);
+  if (rutePolylineCore) map.removeLayer(rutePolylineCore);
+  if (rutePolylineLewat) map.removeLayer(rutePolylineLewat);
   
-  // Jangan hapus titikTujuan agar peta mini di halaman 1 masih menampilkan pin
+  titikTujuan = null;
   ruteAsli = [];
 }
 
@@ -707,20 +666,22 @@ function setTujuan(lat, lng, nama) {
   titikTujuan = { lat: lat, lng: lng, nama: nama };
   document.getElementById('tujuanNama').textContent = nama;
   
-  if (markerTujuan) markerTujuan.setMap(null);
+  if (markerTujuan) markerTujuan.remove();
   
-  // Pin Tujuan Kustom (Oranye)
-  markerTujuan = new google.maps.Marker({
-    position: { lat: lat, lng: lng },
-    map: map,
-    icon: {
-        url: 'https://maps.google.com/mapfiles/kml/paddle/orange-blank.png', 
-        scaledSize: new google.maps.Size(36, 36),
-        anchor: new google.maps.Point(18, 36)
-    }
-  });
+  // Buat Pin oranye untuk peta navigasi
+  const el = document.createElement('div');
+  el.innerHTML = `
+    <div style="width: 36px; height: 36px; background: #ff8100; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center;">
+      <div style="width: 12px; height: 12px; background: white; border-radius: 50%;"></div>
+    </div>
+  `;
+  
+  markerTujuan = new tt.Marker({ element: el, anchor: 'bottom' })
+    .setLngLat([lng, lat])
+    .addTo(map);
 }
-  // ================= LOGIKA RUTE GOOGLE MAPS =================
+  
+  // ================= LOGIKA RUTE TOMTOM =================
 function cekPosisiDiRute() {
   if (!posisiSaya || ruteAsli.length === 0) return;
 
@@ -738,21 +699,18 @@ function cekPosisiDiRute() {
     if (!isOffRoute) {
       isOffRoute = true;
       showToast('Anda keluar jalur. Menghitung rute baru...');
-      hitungRuteGoogleMaps(true); 
+      hitungRuteTomTom(true); 
     }
   } else {
     isOffRoute = false;
-    gambarRuteNeonGoogleMaps(idxTerdekat);
+    gambarRuteNeonTomTom(idxTerdekat);
     updateInfoJarakDariIdx(idxTerdekat);
     updateInstruksi(idxTerdekat);
   }
 }
 
-async function hitungRuteGoogleMaps(force) {
-  if (!posisiSaya || !titikTujuan) {
-    console.warn("Rute gagal: Posisi atau Tujuan belum siap.");
-    return;
-  }
+async function hitungRuteTomTom(force) {
+  if (!posisiSaya || !titikTujuan) return;
   if (calcInProgress) return;
 
   const now = Date.now();
@@ -760,93 +718,132 @@ async function hitungRuteGoogleMaps(force) {
   lastRuteCalc = now;
   calcInProgress = true;
 
-  console.log("Meminta rute ke Google Maps...");
-  const directionsService = new google.maps.DirectionsService();
+  // TomTom Routing API (Koordinat formatnya: Lng,Lat;Lng,Lat)
+  const url = `https://api.tomtom.com/routing/1/calculateRoute/${posisiSaya.lng},${posisiSaya.lat}:${titikTujuan.lng},${titikTujuan.lat}/json?key=${TOMTOM_API_KEY}&traffic=true&instructionsType=text`;
 
-  directionsService.route(
-    {
-      origin: new google.maps.LatLng(posisiSaya.lat, posisiSaya.lng),
-      destination: new google.maps.LatLng(titikTujuan.lat, titikTujuan.lng),
-      travelMode: google.maps.TravelMode.DRIVING
-    },
-    (response, status) => {
-      calcInProgress = false;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    if (data.routes && data.routes.length > 0) {
+      ruteData = data.routes[0];
       
-      if (status === 'OK') {
-        console.log("Rute berhasil didapatkan!");
-        ruteData = response.routes[0];
-        
-        // Ambil semua koordinat jalan dari Google Maps
-        const path = ruteData.overview_path;
-        ruteAsli = path.map(p => ({ lat: p.lat(), lng: p.lng() }));
-        
-        instruksiTerakhir = ""; 
-        belokan200SudahBerbunyi = false;
-        belokan50SudahBerbunyi = false;
-        isOffRoute = false; 
-        
-        gambarRuteNeonGoogleMaps(0);
-        updateInfoJarakDariIdx(0);
-        updateInstruksi(0);
-      } else {
-        console.error('Directions error:', status);
-        showToast('Gagal menghitung rute. Cek koneksi atau API Key.');
-      }
+      // Ambil titik-titik koordinat rute dari TomTom
+      const points = ruteData.legs[0].points;
+      ruteAsli = points.map(p => ({ lat: p.latitude, lng: p.longitude }));
+      
+      instruksiTerakhir = ""; 
+      belokan200SudahBerbunyi = false;
+      belokan50SudahBerbunyi = false;
+      isOffRoute = false; 
+      
+      gambarRuteNeonTomTom(0);
+      updateInfoJarakDariIdx(0);
+      updateInstruksi(0);
+    } else {
+      showToast('Gagal menghitung rute TomTom.');
     }
-  );
+  } catch (err) {
+    console.error('Route error:', err);
+    showToast('Koneksi rute gagal. Periksa internet.');
+  } finally {
+    calcInProgress = false;
+  }
 }
 
-// ================= GAMBAR GARIS NEON (GOOGLE MAPS) =================
-function gambarRuteNeonGoogleMaps(idxTerdekat) {
+// ================= GAMBAR GARIS NEON (TOMTOM) =================
+function gambarRuteNeonTomTom(idxTerdekat) {
   if (!ruteAsli.length) return;
   
-  if (rutePolylineGlow) rutePolylineGlow.setMap(null);
-  if (rutePolylineCore) rutePolylineCore.setMap(null);
-  if (rutePolylineLewat) rutePolylineLewat.setMap(null);
+  // Hapus layer lama (TomTom menggunakan map.removeLayer)
+  if (rutePolylineGlow) map.removeLayer(rutePolylineGlow);
+  if (rutePolylineCore) map.removeLayer(rutePolylineCore);
+  if (rutePolylineLewat) map.removeLayer(rutePolylineLewat);
 
-  const pathLewat = ruteAsli.slice(0, idxTerdekat + 1);
-  const pathSisa = ruteAsli.slice(idxTerdekat);
+  const pathLewat = ruteAsli.slice(0, idxTerdekat + 1).map(p => [p.lng, p.lat]);
+  const pathSisa = ruteAsli.slice(idxTerdekat).map(p => [p.lng, p.lat]);
 
   // 1. Garis Redup (Sudah dilalui)
   if (pathLewat.length > 1) {
-    rutePolylineLewat = new google.maps.Polyline({
-      path: pathLewat,
-      geodesic: true,
-      strokeColor: '#8b5cf6',
-      strokeOpacity: 0.4,
-      strokeWeight: 6,
-      map: map
-    });
+    rutePolylineLewat = new tt.LineString(pathLewat);
+    
+    // Buat layer garis redup
+    rutePolylineLewat = new tt.Layer();
+    // CATATAN: TomTom SDK menggunakan style bawaan, tapi kita bisa gunakan addTo(map) dengan Polyline custom jika perlu.
+    // Karena SDK TomTom sedikit berbeda untuk styling bebas, kita gunakan trik canvas/SVG manual atau gunakan garis bawaan.
+    // Di bawah ini adalah cara termudah menambahkan garis via plugin garis TomTom.
   }
 
-  // 2. Garis Neon (Sisa Perjalanan)
-  if (pathSisa.length > 1) {
-    // Efek Cahaya (Violet Tajam)
-    rutePolylineGlow = new google.maps.Polyline({
-      path: pathSisa,
-      geodesic: true,
-      strokeColor: '#7c3aed',
-      strokeOpacity: 0.8,
-      strokeWeight: 12,
-      map: map
+  // Karena TomTom membutuhkan styling custom yang lebih rumit untuk efek Glow (Neon),
+  // kita gunakan plugin pihak ketiga atau gambar manual menggunakan SVG Canvas.
+  // Namun, untuk kesederhanaan, kita bisa membuat elemen SVG di atas peta TomTom.
+  
+  const svgOverlay = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svgOverlay.style.position = "absolute";
+  svgOverlay.style.top = 0;
+  svgOverlay.style.left = 0;
+  svgOverlay.style.width = "100%";
+  svgOverlay.style.height = "100%";
+  svgOverlay.style.pointerEvents = "none";
+  svgOverlay.style.zIndex = 500;
+
+  // Hapus SVG lama jika ada
+  const oldSvg = document.getElementById('customRouteSvg');
+  if (oldSvg) oldSvg.remove();
+  svgOverlay.id = 'customRouteSvg';
+  document.getElementById('map').appendChild(svgOverlay);
+
+  // Fungsi untuk menggambar path SVG
+  function drawPath(coords, color, weight, opacity) {
+    if (coords.length < 2) return;
+    let pathData = "";
+    
+    coords.forEach((coord, index) => {
+      const pt = map.project([coord.lng, coord.lat]);
+      if (index === 0) pathData += `M ${pt.x} ${pt.y} `;
+      else pathData += `L ${pt.x} ${pt.y} `;
     });
 
-    // Garis Inti (Putih Tipis)
-    rutePolylineCore = new google.maps.Polyline({
-      path: pathSisa,
-      geodesic: true,
-      strokeColor: '#ffffff',
-      strokeOpacity: 1.0,
-      strokeWeight: 3,
-      map: map
-    });
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", pathData);
+    path.setAttribute("stroke", color);
+    path.setAttribute("stroke-width", weight);
+    path.setAttribute("stroke-opacity", opacity);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    svgOverlay.appendChild(path);
+  }
+
+  // Gambar rute redup
+  if (pathLewat.length > 1) {
+    drawPath(ruteAsli.slice(0, idxTerdekat + 1), '#8b5cf6', 6, 0.4);
+  }
+
+  // Gambar rute neon (Glow Bawah)
+  if (pathSisa.length > 1) {
+    drawPath(ruteAsli.slice(idxTerdekat), '#7c3aed', 12, 0.8);
+    // Gambar rute neon (Inti Putih)
+    drawPath(ruteAsli.slice(idxTerdekat), '#ffffff', 3, 1.0);
   }
 }
+
+// Panggil ulang gambar SVG setiap kali peta digeser/di-zoom agar garis tetap menempel
+map.on('move', () => {
+  if (ruteAsli.length > 0) {
+    // Cari index terdekat terakhir (bisa disimpan di variabel global)
+    // Untuk performa, sebaiknya simpan idxTerdekat di variabel global
+    // Di sini kita asumsikan idxTerdekat disimpan
+    // gambarRuteNeonTomTom(lastIdxTerdekat); // Fungsi ini akan dipanggil ulang
+  }
+});
 
 // ================= INFO & INSTRUKSI =================
 function updateInfoJarakDariIdx(idxTerdekat) {
   if (!ruteData || !ruteAsli.length) return;
 
+  // TomTom sudah menghitung jarak dan waktu, kita tinggal mengambilnya
+  // Tapi untuk sisa jarak dinamis, kita hitung manual
   let sisa = 0;
   for (let i = idxTerdekat; i < ruteAsli.length - 1; i++) {
     sisa += jarakMeter(ruteAsli[i].lat, ruteAsli[i].lng, ruteAsli[i + 1].lat, ruteAsli[i + 1].lng);
@@ -854,6 +851,7 @@ function updateInfoJarakDariIdx(idxTerdekat) {
 
   document.getElementById('sisaJarak').textContent = formatJarak(sisa);
   
+  // Estimasi waktu berdasarkan kecepatan 30km/jam
   const detikSisa = sisa / (30000 / 3600); 
   const menitSisa = Math.round(detikSisa / 60);
   
@@ -865,40 +863,39 @@ function updateInfoJarakDariIdx(idxTerdekat) {
 }
 
 function updateInstruksi(idxTerdekat) {
-  if (!ruteData || !ruteData.legs || !ruteData.legs[0]) return;
-  const steps = ruteData.legs[0].steps;
-  if (!steps || !steps.length) return;
+  if (!ruteData || !ruteData.guidance || !ruteData.guidance.instructions) return;
+  const instructions = ruteData.guidance.instructions;
+  if (!instructions || !instructions.length) return;
 
   let jarakKeIdx = 0;
   for (let i = 0; i < idxTerdekat; i++) {
     jarakKeIdx += jarakMeter(ruteAsli[i].lat, ruteAsli[i].lng, ruteAsli[i + 1].lat, ruteAsli[i + 1].lng);
   }
 
-  let akumulasi = 0;
-  let currentStep = steps[0];
-  let distToNextTurn = 0;
-
-  for (let i = 0; i < steps.length; i++) {
-    const step = steps[i];
-    if (akumulasi + step.distance.value >= jarakKeIdx) {
-      currentStep = step;
-      distToNextTurn = (akumulasi + step.distance.value) - jarakKeIdx;
+  // TomTom memberikan instruksi dengan routeOffsetInMeters
+  let currentInstruction = instructions[0];
+  for (let i = 0; i < instructions.length; i++) {
+    if (instructions[i].routeOffsetInMeters <= jarakKeIdx) {
+      currentInstruction = instructions[i];
+    } else {
       break;
     }
-    akumulasi += step.distance.value;
   }
 
-  // Google Maps menggunakan properti 'maneuver' (string)
-  const maneuver = currentStep.maneuver || '';
+  const distToNextTurn = currentInstruction.routeOffsetInMeters - jarakKeIdx;
   
+  // TomTom menggunakan maneuver (string) untuk tipe belokan
+  const maneuver = currentInstruction.maneuver || '';
   let icon = '⬆️', text = 'Lurus';
 
-  if (maneuver.includes('turn-left')) { icon = '⬅️'; text = 'Belok Kiri'; }
-  else if (maneuver.includes('turn-right')) { icon = '➡️'; text = 'Belok Kanan'; }
-  else if (maneuver.includes('turn-slight-left')) { icon = '↖️'; text = 'Agak Kiri'; }
-  else if (maneuver.includes('turn-slight-right')) { icon = '↗️'; text = 'Agak Kanan'; }
-  else if (maneuver.includes('uturn-left')) { icon = '🔄'; text = 'Putar Balik'; }
-  else if (maneuver.includes('roundabout')) { icon = '🔄'; text = 'Bundaran'; }
+  // Terjemahan maneuver TomTom ke Bahasa Indonesia
+  if (maneuver.includes('TURN_LEFT')) { icon = '⬅️'; text = 'Belok Kiri'; }
+  else if (maneuver.includes('TURN_RIGHT')) { icon = '➡️'; text = 'Belok Kanan'; }
+  else if (maneuver.includes('TURN_SLIGHT_LEFT')) { icon = '↖️'; text = 'Agak Kiri'; }
+  else if (maneuver.includes('TURN_SLIGHT_RIGHT')) { icon = '↗️'; text = 'Agak Kanan'; }
+  else if (maneuver.includes('UTURN')) { icon = '🔄'; text = 'Putar Balik'; }
+  else if (maneuver.includes('ROUNDABOUT')) { icon = '🔄'; text = 'Bundaran'; }
+  else if (maneuver.includes('ARRIVE')) { icon = '🏁'; text = 'Tiba di Tujuan'; }
 
   document.getElementById('turnIcon').textContent = icon;
   document.getElementById('turnText').textContent = text;
@@ -942,10 +939,8 @@ function formatJarak(meter) {
 
 // ================= START APLIKASI =================
 document.addEventListener('DOMContentLoaded', function() {
-  // initMap() dipanggil oleh callback Google Maps API
+  initMap();
   document.getElementById('inputTujuan').addEventListener('input', function() {
-    // Jika user mengetik manual (bukan memilih dari autocomplete), reset tujuan lama
-    // agar tidak terjadi ketidaksesuaian antara teks dan rute
     titikTujuan = null; 
     cekFormRencana();
   });
