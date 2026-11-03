@@ -257,17 +257,60 @@ let belokan50SudahBerbunyi = false;
 
 // ================= INIT MAP (TOMTOM) =================
 function initMap() {
-  const defaultLoc = { lat: -6.387, lng: 106.936 };
+  try {
+    const defaultLoc = { lat: -6.387, lng: 106.936 };
 
-  // 1. Inisialisasi Peta Utama (Halaman 2)
-  map = tt.map({
-    key: TOMTOM_API_KEY,
-    container: 'map',
-    center: defaultLoc,
-    zoom: 16,
-    pitch: 0, // 0 = top-down
-    bearing: 0 // Rotasi peta (Heading Up)
-  });
+    // 1. Inisialisasi Peta Utama (Halaman 2)
+    map = tt.map({
+      key: TOMTOM_API_KEY,
+      container: 'map',
+      center: defaultLoc,
+      zoom: 16
+    });
+
+    // 2. Inisialisasi Peta Mini (Halaman 1)
+    mapRencana = tt.map({
+      key: TOMTOM_API_KEY,
+      container: 'mapRencana',
+      center: defaultLoc,
+      zoom: 15
+    });
+
+    // Hapus kontrol zoom bawaan TomTom di peta utama
+    map.removeControl(map.controls.get('zoomControl'));
+
+    // Event Listener
+    map.on('dragstart', function() {
+      followMode = false;
+      const btn = document.getElementById('btnRecenter');
+      if (btn) btn.style.background = '#7138e8'; 
+    });
+
+    map.on('click', function(e) {
+      if (!modePilihTujuan) return;
+      modePilihTujuan = false;
+      
+      document.getElementById('halamanNavigasi').style.display = 'none';
+      document.getElementById('halamanRencana').style.display = 'flex';
+      
+      const lat = e.lngLat.lat;
+      const lng = e.lngLat.lng;
+      setTujuan(lat, lng, 'Titik dari Peta');
+      document.getElementById('inputTujuan').value = lat.toFixed(6) + ', ' + lng.toFixed(6);
+      
+      setTimeout(() => { tampilkanPetaRencana(lat, lng); }, 100);
+      showToast('Lokasi tujuan dipilih dari peta');
+      cekFormRencana();
+    });
+
+    // Mulai GPS setelah peta siap
+    mulaiGPS();
+    
+  } catch (error) {
+    console.error("Gagal inisialisasi TomTom Map:", error);
+    showToast("Gagal memuat peta. Periksa API Key.");
+  }
+}
 
   // 2. Inisialisasi Peta Mini (Halaman 1)
   mapRencana = tt.map({
@@ -938,8 +981,15 @@ function formatJarak(meter) {
 }
 
 // ================= START APLIKASI =================
+// ================= START APLIKASI =================
 document.addEventListener('DOMContentLoaded', function() {
-  initMap();
+  // TAMBAHKAN BARIS INI UNTUK MENYALAKAN PETA
+  if (typeof tt !== 'undefined') {
+    initMap(); 
+  } else {
+    console.error("TomTom SDK gagal dimuat.");
+  }
+
   document.getElementById('inputTujuan').addEventListener('input', function() {
     titikTujuan = null; 
     cekFormRencana();
