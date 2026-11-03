@@ -213,7 +213,8 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif
 
 <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/6.25.0/maps/maps-web.min.js"></script>
 <script>
-// ================= STATE =================
+// Kode JavaScript Bagian 2 & 3 menyusul
+  // ================= STATE =================
 // GANTI DENGAN API KEY TOMTOM ANDA
 const TOMTOM_API_KEY = 'duPP6hddpLvDr8U7xEN9Pit3pMKXD3Xm'; 
 
@@ -453,6 +454,235 @@ function updateHeading(lat, lng) {
   } else {
     window._lastPosHeading = { lat: lat, lng: lng };
   }
+}
+
+  // ================= UTIL UI =================
+function showToast(msg, duration) {
+  duration = duration || 2500;
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.classList.remove('show'); }, duration);
+}
+
+function kembaliKePosisiSaya() {
+  followMode = true;
+  const btn = document.getElementById('btnRecenter');
+  if (btn) btn.style.background = '#18a84b';
+  
+  if (posisiSaya) {
+    map.easeTo({ center: [posisiSaya.lng, posisiSaya.lat], bearing: heading });
+  } else {
+    showToast('Posisi GPS belum tersedia');
+  }
+}
+
+// ================= WAKE LOCK =================
+async function mintaWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock aktif');
+    }
+  } catch (err) {
+    console.warn('Gagal Wake Lock:', err);
+  }
+}
+
+function lepasWakeLock() {
+  if (wakeLock !== null) {
+    wakeLock.release().then(() => { wakeLock = null; });
+  }
+}
+
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock !== null && document.visibilityState === 'visible') {
+    if (document.getElementById('halamanNavigasi').style.display === 'block') {
+      mintaWakeLock();
+    }
+  }
+});
+
+// ================= FITUR SUARA (TEXT-TO-SPEECH) =================
+function muatSuara() {
+  const daftarSuara = window.speechSynthesis.getVoices();
+  let suaraID = daftarSuara.filter(s => s.lang.includes('id') || s.lang.includes('ID'));
+  
+  if (suaraID.length > 0) {
+    let perempuan = suaraID.find(s => s.name.toLowerCase().includes('female') || s.name.toLowerCase().includes('wanita'));
+    suaraPerempuan = perempuan || suaraID[0]; 
+  } else {
+    let inggris = daftarSuara.filter(s => s.lang.includes('en'));
+    suaraPerempuan = inggris.find(s => s.name.toLowerCase().includes('female')) || inggris[0] || daftarSuara[0];
+  }
+}
+
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = muatSuara;
+  muatSuara(); 
+}
+
+function putarSuara(teks) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const ucapan = new SpeechSynthesisUtterance(teks);
+  ucapan.lang = 'id-ID'; 
+  ucapan.rate = 0.9;     
+  ucapan.pitch = 1.0;    
+  if (suaraPerempuan) ucapan.voice = suaraPerempuan;
+  window.speechSynthesis.speak(ucapan);
+}
+
+// ================= FORM & PARSING LOKASI =================
+function cekFormRencana() {
+  const awal = document.getElementById('inputAwal').value;
+  const tujuan = document.getElementById('inputTujuan').value;
+  const btnMulai = document.getElementById('btnMulai');
+  
+  // Tombol aktif jika awal terisi, tujuan > 3 huruf, DAN titikTujuan sudah di-set
+  if (awal && awal !== 'Mencari GPS...' && tujuan.length > 3 && titikTujuan !== null) {
+    btnMulai.disabled = false;
+  } else {
+    btnMulai.disabled = true;
+  }
+}
+
+function parseShareLocation(text) {
+  let m = text.match(/(-?\d{1,3}\.\d+)[,\s]+(-?\d{1,3}\.\d+)/);
+  if (m) {
+    const a = parseFloat(m[1]), b = parseFloat(m[2]);
+    if (a >= -90 && a <= 90 && b >= -180 && b <= 180) return { lat: a, lng: b };
+  }
+  m = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  return null;
+}
+
+async function tempelWA() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text) { showToast('Clipboard kosong'); return; }
+    
+    const parsed = parseShareLocation(text);
+    if (parsed) {
+      document.getElementById('inputTujuan').value = parsed.lat.toFixed(6) + ', ' + parsed.lng.toFixed(6);
+      setTujuan(parsed.lat, parsed.lng, 'Koordinat dari WA');
+      tampilkanPetaRencana(parsed.lat, parsed.lng);
+      showToast('Koordinat berhasil diambil');
+      cekFormRencana();
+    } else {
+      document.getElementById('inputTujuan').value = text;
+      showToast('Teks alamat terdeteksi. Klik MULAI untuk mencari.');
+      cekFormRencana();
+    }
+  } catch (err) {
+    showToast('Gagal membaca clipboard.');
+  }
+}
+
+function pilihDiPeta() {
+  document.getElementById('halamanRencana').style.display = 'none';
+  document.getElementById('halamanNavigasi').style.display = 'block';
+  modePilihTujuan = true;
+  
+  map.resize();
+  if (posisiSaya) map.setCenter({ lat: posisiSaya.lat, lng: posisiSaya.lng });
+  
+  showToast('Ketuk pada peta untuk memilih lokasi tujuan', 4000);
+}
+
+// ================= MULAI & BATAL PERJALANAN =================
+async function mulaiPerjalanan() {
+  const tujuanInput = document.getElementById('inputTujuan').value.trim();
+  if (!tujuanInput) { showToast('Tujuan belum diisi'); return; }
+
+  // Jika titikTujuan sudah ada (dari pilih peta / tempel WA), langsung jalan
+  if (titikTujuan) {
+    prosesMulaiPerjalanan();
+    return;
+  }
+
+  // Jika teks alamat, gunakan TomTom Search API (Fuzzy Search)
+  document.getElementById('btnMulai').textContent = '⏳ MENCARI LOKASI...';
+  
+  try {
+    const url = `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(tujuanInput)}.json?key=${TOMTOM_API_KEY}&countrySet=ID&limit=1`;
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    if (data.results && data.results.length > 0) {
+      const lokasi = data.results[0].position;
+      const nama = data.results[0].address.freeformAddress;
+      setTujuan(lokasi.lat, lokasi.lon, nama);
+      tampilkanPetaRencana(lokasi.lat, lokasi.lon);
+      prosesMulaiPerjalanan();
+    } else {
+      showToast('Alamat tidak ditemukan di TomTom.');
+      document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
+    }
+  } catch (e) {
+    showToast('Gagal mencari alamat. Periksa koneksi.');
+    document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
+  }
+}
+
+function prosesMulaiPerjalanan() {
+  document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
+  
+  // Pindah Halaman
+  document.getElementById('halamanRencana').style.display = 'none';
+  document.getElementById('halamanNavigasi').style.display = 'block';
+  
+  map.resize();
+  if (posisiSaya) map.setCenter({ lat: posisiSaya.lat, lng: posisiSaya.lng });
+
+  document.getElementById('instruksiBox').style.display = 'flex';
+  followMode = true;
+  
+  mintaWakeLock(); 
+  hitungRuteTomTom(true); 
+
+  // Suara Sapaan
+  setTimeout(() => {
+    putarSuara("Selamat menikmati perjalanan. Hati-hati selama perjalanan sayang.");
+  }, 1500); 
+}
+
+function batalPerjalanan() {
+  lepasWakeLock();
+  window.speechSynthesis.cancel();
+
+  document.getElementById('halamanNavigasi').style.display = 'none';
+  document.getElementById('halamanRencana').style.display = 'flex';
+  document.getElementById('btnMulai').textContent = '🚀 MULAI PERJALANAN';
+  
+  if (markerTujuan) markerTujuan.remove();
+  if (rutePolylineGlow) map.removeLayer(rutePolylineGlow);
+  if (rutePolylineCore) map.removeLayer(rutePolylineCore);
+  if (rutePolylineLewat) map.removeLayer(rutePolylineLewat);
+  
+  titikTujuan = null;
+  ruteAsli = [];
+}
+
+function setTujuan(lat, lng, nama) {
+  titikTujuan = { lat: lat, lng: lng, nama: nama };
+  document.getElementById('tujuanNama').textContent = nama;
+  
+  if (markerTujuan) markerTujuan.remove();
+  
+  // Buat Pin oranye untuk peta navigasi
+  const el = document.createElement('div');
+  el.innerHTML = `
+    <div style="width: 36px; height: 36px; background: #ff8100; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center;">
+      <div style="width: 12px; height: 12px; background: white; border-radius: 50%;"></div>
+    </div>
+  `;
+  
+  markerTujuan = new tt.Marker({ element: el, anchor: 'bottom' })
+    .setLngLat([lng, lat])
+    .addTo(map);
 }
 
   // ================= LOGIKA RUTE TOMTOM =================
