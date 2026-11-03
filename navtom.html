@@ -603,7 +603,7 @@ const TOMTOM_STYLE_URL =
 function tomtomSiap() {
 
   return TOMTOM_API_KEY &&
-    TOMTOM_API_KEY !== "ISI_API_KEY_TOMTOM_DI_SINI" &&
+    TOMTOM_API_KEY !== "duPP6hddpLvDr8U7xEN9Pit3pMKXD3Xm" &&
     TOMTOM_API_KEY.trim().length > 10;
 
 }
@@ -623,6 +623,7 @@ let modePilihTujuan = false;
 let heading = 0;
 
 let markerSaya = null;
+let markerAnimationFrame = null;
 let markerTujuan = null;
 let markerTujuanRencana = null;
 
@@ -674,6 +675,7 @@ function buatElemenMobil() {
       id="mobilSaya"
       src="mobil.png"
       alt="Posisi kendaraan"
+      style="transition: transform 350ms ease-out; will-change: transform;"
     >
   `;
 
@@ -796,6 +798,92 @@ function initMap() {
 
   map.on("dragstart", function() {
 
+    followMode = false;
+
+  });
+
+  map.on("zoomstart", function() {
+
+    followMode = false;
+
+  });
+
+  map.on("rotatestart", function() {
+
+    followMode = false;
+
+  });
+
+  map.on("pitchstart", function() {
+
+    followMode = false;
+
+  });
+
+  map.on("error", function(e) {
+
+    console.error("MapLibre error:", e.error || e);
+
+  });
+
+  // PETA MINI RENCANA
+
+  mapRencana = new maplibregl.Map({
+
+    container: "mapRencana",
+
+    style: TOMTOM_STYLE_URL,
+
+    center: [106.936, -6.387],
+
+    zoom: 14,
+
+    attributionControl: false,
+
+    interactive: true
+
+  });
+
+  mapRencana.addControl(
+
+    new maplibregl.NavigationControl({
+
+      showCompass: false,
+      visualizePitch: false
+
+    }),
+
+    "top-right"
+
+  );
+
+  mapRencana.on("load", function() {
+
+    if (posisiSaya) {
+
+      mapRencana.setCenter([
+        posisiSaya.lng,
+        posisiSaya.lat
+      ]);
+
+    }
+
+  });
+
+  mapRencana.on("click", function(e) {
+
+    if (!modePilihTujuan) return;
+
+    pilihKoordinatTujuan([
+      e.lngLat.lng,
+      e.lngLat.lat
+    ]);
+
+  });
+
+}
+
+  
     followMode = false;
 
     const btn = document.getElementById("btnRecenter");
@@ -1332,6 +1420,48 @@ function mulaiGPS() {
 
 }
 
+// ============================================================
+// ANIMASI POSISI MOBIL — hanya untuk tampilan marker
+// Koordinat GPS asli tetap dipakai untuk rute dan perhitungan.
+// ============================================================
+
+function animasikanMarkerMobil(koordinatTujuan) {
+
+  if (!markerSaya) return;
+
+  if (markerAnimationFrame) {
+    cancelAnimationFrame(markerAnimationFrame);
+    markerAnimationFrame = null;
+  }
+
+  const posisiAwal = markerSaya.getLngLat();
+  const awal = [posisiAwal.lng, posisiAwal.lat];
+  const mulai = performance.now();
+  const durasi = 650;
+
+  function langkah(waktu) {
+
+    const progres = Math.min((waktu - mulai) / durasi, 1);
+    // Ease-in-out agar gerakan tidak terasa patah di awal/akhir.
+    const halus = progres * progres * (3 - 2 * progres);
+
+    const lng = awal[0] + (koordinatTujuan[0] - awal[0]) * halus;
+    const lat = awal[1] + (koordinatTujuan[1] - awal[1]) * halus;
+
+    markerSaya.setLngLat([lng, lat]);
+
+    if (progres < 1) {
+      markerAnimationFrame = requestAnimationFrame(langkah);
+    } else {
+      markerAnimationFrame = null;
+    }
+
+  }
+
+  markerAnimationFrame = requestAnimationFrame(langkah);
+
+}
+
 function perbaruiMarkerGPS() {
 
   if (!map || !posisiSaya) return;
@@ -1360,7 +1490,7 @@ function perbaruiMarkerGPS() {
 
   } else {
 
-    markerSaya.setLngLat(koordinat);
+    animasikanMarkerMobil(koordinat);
 
   }
 
@@ -1554,36 +1684,24 @@ function updateHeading(lat, lng) {
       const mobilEl = document.getElementById("mobilSaya");
 
       if (mobilEl) {
-
-        mobilEl.style.transform =
-          "rotate(" + heading + "deg)";
-
+        mobilEl.style.transform = "rotate(" + heading + "deg)";
       }
-
-      window._lastPosHeading = {
-
-        lat: lat,
-
-        lng: lng
-
-      };
 
     }
 
-  } else {
-
-    window._lastPosHeading = {
-
-      lat: lat,
-
-      lng: lng
-
-    };
-
   }
+
+  window._lastPosHeading = {
+
+    lat: lat,
+
+    lng: lng
+
+  };
 
 }
 
+  
 // ============================================================
 // UTILITAS UI
 // ============================================================
@@ -2356,6 +2474,9 @@ async function hitungRuteTomTom(force) {
 
       });
 
+      
+      });
+
       if (ruteAsli.length < 2) {
 
         throw new Error(
@@ -2480,19 +2601,19 @@ function gambarRuteNeon(idxTerdekat) {
 
   if (!map.isStyleLoaded()) {
 
-  map.once("idle", function() {
+    map.once("idle", function() {
 
-    if (map && map.isStyleLoaded()) {
+      if (map && map.isStyleLoaded()) {
 
-      gambarRuteNeon(idxTerdekat);
+        gambarRuteNeon(idxTerdekat);
 
-    }
+      }
 
-  });
+    });
 
-  return;
+    return;
 
-}
+  }
 
   siapkanLayerPeta(map);
 
