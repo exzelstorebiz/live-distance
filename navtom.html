@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -6,618 +5,154 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>NAVIGASI PRIBADI (TOMTOM)</title>
-
+<title>NAVIGASI PRIBADI (MAPLIBRE)</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.css"/>
-
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; background: #f4f3f8; color: #202020; overflow: hidden; }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  font-family: Arial, sans-serif;
-  background: #f4f3f8;
-  color: #202020;
-  overflow: hidden;
-}
+/* HALAMAN 1: RENCANA */
+#halamanRencana { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f3f8; z-index: 2000; display: flex; flex-direction: column; }
+.header-rencana { background: #7138e8; color: white; padding: 20px 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.header-rencana h1 { margin: 0; font-size: 20px; font-weight: 800; }
+.header-rencana p { margin: 5px 0 0; font-size: 12px; opacity: .9; }
+.form-container { padding: 20px; flex: 1; overflow-y: auto; }
+.form-group { margin-bottom: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+.form-group label { display: block; font-size: 12px; font-weight: 700; color: #7138e8; margin-bottom: 8px; }
+.form-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; margin-bottom: 10px; }
+.form-group input:focus { border-color: #7138e8; }
+.form-group input[readonly] { background: #f9f9f9; color: #666; }
+.btn-group { display: flex; gap: 8px; }
+.btn-group button { flex: 1; padding: 10px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-wa { background: #25D366; color: white; }
+.btn-peta { background: #7138e8; color: white; }
+#mapRencana { width: 100%; height: 200px; border-radius: 12px; margin-top: 10px; display: none; border: 2px solid #7138e8; z-index: 1; }
+.btn-mulai { display: block; width: calc(100% - 40px); margin: 20px; padding: 16px; background: #7138e8; color: white; border: 0; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 15px rgba(113,56,232,.4); }
+.btn-mulai:disabled { background: #aaa; box-shadow: none; }
 
-/* ================= HALAMAN 1: PERENCANAAN ================= */
+/* HALAMAN 2: NAVIGASI */
+#halamanNavigasi { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 1000; }
+#map { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+.maplibregl-ctrl-attrib { font-size: 9px; }
+.maplibregl-ctrl-group button { width: 30px; height: 30px; }
+.tt-marker { width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; }
+.tt-marker img { width: 100%; height: 100%; object-fit: contain; }
+.tt-destination { width: 48px; height: 48px; filter: drop-shadow(0 4px 4px rgba(0,0,0,.45)); }
 
-#halamanRencana {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #f4f3f8;
-  z-index: 2000;
-  display: flex;
-  flex-direction: column;
-}
+.panel-atas { position: fixed; top: 10px; left: 10px; right: 10px; z-index: 1000; background: rgba(30,30,46,.95); color: white; border-radius: 12px; padding: 10px 15px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,.3); }
+.btn-batal { background: transparent; width: 36px; height: 36px; padding: 0; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.tujuan-text { flex: 1; font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status-gps { font-size: 10px; color: #18a84b; font-weight: bold; display: block; margin-top: 2px; }
 
-.header-rencana {
-  background: #7138e8;
-  color: white;
-  padding: 20px 15px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,.2);
-}
+.instruksi-box { position: fixed; top: 70px; left: 10px; right: 10px; z-index: 999; background: #1e1e2e; color: white; border-radius: 12px; padding: 12px 15px; box-shadow: 0 3px 15px rgba(0,0,0,.25); display: none; align-items: center; gap: 15px; }
+.instruksi-icon { font-size: 30px; }
+.instruksi-text { font-size: 16px; font-weight: 800; }
+.instruksi-dist { font-size: 12px; color: #aaa; margin-top: 4px; }
+.foto-driver { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,.3); margin-left: auto; }
 
-.header-rencana h1 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-}
+.speedometer { position: fixed; bottom: 100px; left: 15px; z-index: 1000; width: 60px; height: 60px; border-radius: 50%; background: rgba(30,30,46,.9); color: white; border: 3px solid #7138e8; box-shadow: 0 3px 10px rgba(0,0,0,.3); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.speed-val { font-size: 18px; font-weight: 800; line-height: 1; }
+.speed-unit { font-size: 9px; color: #aaa; margin-top: 2px; }
+.btn-recenter { position: fixed; right: 15px; bottom: 100px; z-index: 1000; width: 50px; height: 50px; border-radius: 50%; background: #18a84b; color: white; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,.3); font-size: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.panel-bawah { position: fixed; bottom: 15px; left: 10px; right: 10px; z-index: 1000; background: white; border-radius: 16px; padding: 15px; box-shadow: 0 -4px 20px rgba(0,0,0,.15); display: flex; justify-content: space-between; align-items: center; }
+.info-box { text-align: center; flex: 1; }
+.info-label { font-size: 10px; color: #888; font-weight: 700; text-transform: uppercase; }
+.info-value { font-size: 18px; font-weight: 800; color: #7138e8; margin-top: 2px; }
 
-.header-rencana p {
-  margin: 5px 0 0;
-  font-size: 12px;
-  opacity: .9;
-}
-
-.form-container {
-  padding: 20px;
-  flex: 1;
-  overflow-y: auto;
-}
-
-.form-group {
-  margin-bottom: 20px;
-  background: white;
-  padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.05);
-}
-
-.form-group label {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-  color: #7138e8;
-  margin-bottom: 8px;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  margin-bottom: 10px;
-}
-
-.form-group input:focus {
-  border-color: #7138e8;
-}
-
-.form-group input[readonly] {
-  background: #f9f9f9;
-  color: #666;
-}
-
-.btn-group {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-group button {
-  flex: 1;
-  padding: 10px;
-  border: 0;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.btn-wa {
-  background: #25D366;
-  color: white;
-}
-
-.btn-peta {
-  background: #7138e8;
-  color: white;
-}
-
-/* Peta Mini */
-
-#mapRencana {
-  width: 100%;
-  height: 200px;
-  border-radius: 12px;
-  margin-top: 10px;
-  display: none;
-  border: 2px solid #7138e8;
-  z-index: 1;
-}
-
-.btn-mulai {
-  display: block;
-  width: calc(100% - 40px);
-  margin: 20px;
-  padding: 16px;
-  background: #7138e8;
-  color: white;
-  border: 0;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(113,56,232,.4);
-}
-
-.btn-mulai:disabled {
-  background: #aaa;
-  box-shadow: none;
-}
-
-/* ================= HALAMAN 2: NAVIGASI ================= */
-
-#halamanNavigasi {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: none;
-  z-index: 1000;
-}
-
-#map {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-}
-
-#mapRencana .maplibregl-ctrl-attrib {
-  font-size: 8px;
-}
-
-.maplibregl-ctrl-attrib {
-  font-size: 9px;
-}
-
-.maplibregl-ctrl-group button {
-  width: 30px;
-  height: 30px;
-}
-
-.tt-marker {
-  width: 65px;
-  height: 65px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tt-marker img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.tt-destination {
-  width: 48px;
-  height: 48px;
-  filter: drop-shadow(0 4px 4px rgba(0,0,0,.45));
-}
-
-/* PANEL ATAS */
-
-.panel-atas {
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  z-index: 1000;
-  background: rgba(30,30,46,.95);
-  color: white;
-  border-radius: 12px;
-  padding: 10px 15px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 4px 15px rgba(0,0,0,.3);
-}
-
-.btn-batal {
-  background: transparent;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.tujuan-text {
-  flex: 1;
-  font-size: 14px;
-  font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.status-gps {
-  font-size: 10px;
-  color: #18a84b;
-  font-weight: bold;
-  display: block;
-  margin-top: 2px;
-}
-
-/* INSTRUKSI */
-
-.instruksi-box {
-  position: fixed;
-  top: 70px;
-  left: 10px;
-  right: 10px;
-  z-index: 999;
-  background: #1e1e2e;
-  color: white;
-  border-radius: 12px;
-  padding: 12px 15px;
-  box-shadow: 0 3px 15px rgba(0,0,0,.25);
-  display: none;
-  align-items: center;
-  gap: 15px;
-}
-
-.instruksi-icon {
-  font-size: 30px;
-}
-
-.instruksi-text {
-  font-size: 16px;
-  font-weight: 800;
-}
-
-.instruksi-dist {
-  font-size: 12px;
-  color: #aaa;
-  margin-top: 4px;
-}
-
-/* FOTO DRIVER */
-
-.foto-driver {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 5px rgba(0,0,0,.3);
-  margin-left: auto;
-}
-
-/* SPEEDOMETER */
-
-.speedometer {
-  position: fixed;
-  bottom: 100px;
-  left: 15px;
-  z-index: 1000;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: rgba(30,30,46,.9);
-  color: white;
-  border: 3px solid #7138e8;
-  box-shadow: 0 3px 10px rgba(0,0,0,.3);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.speed-val {
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.speed-unit {
-  font-size: 9px;
-  color: #aaa;
-  margin-top: 2px;
-}
-
-/* TOMBOL KEMBALI KE GPS */
-
-.btn-recenter {
-  position: fixed;
-  right: 15px;
-  bottom: 100px;
-  z-index: 1000;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: #18a84b;
-  color: white;
-  border: 3px solid white;
-  box-shadow: 0 3px 10px rgba(0,0,0,.3);
-  font-size: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-/* PANEL BAWAH */
-
-.panel-bawah {
-  position: fixed;
-  bottom: 15px;
-  left: 10px;
-  right: 10px;
-  z-index: 1000;
-  background: white;
-  border-radius: 16px;
-  padding: 15px;
-  box-shadow: 0 -4px 20px rgba(0,0,0,.15);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.info-box {
-  text-align: center;
-  flex: 1;
-}
-
-.info-label {
-  font-size: 10px;
-  color: #888;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.info-value {
-  font-size: 18px;
-  font-weight: 800;
-  color: #7138e8;
-  margin-top: 2px;
-}
-
-/* TOAST */
-
-.toast {
-  position: fixed;
-  left: 50%;
-  bottom: 170px;
-  transform: translateX(-50%);
-  background: #333;
-  color: white;
-  padding: 10px 18px;
-  border-radius: 20px;
-  font-size: 13px;
-  z-index: 3000;
-  opacity: 0;
-  transition: opacity .3s;
-  pointer-events: none;
-  max-width: 85%;
-  text-align: center;
-}
-
-.toast.show {
-  opacity: 1;
-}
+.toast { position: fixed; left: 50%; bottom: 170px; transform: translateX(-50%); background: #333; color: white; padding: 10px 18px; border-radius: 20px; font-size: 13px; z-index: 3000; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 85%; text-align: center; }
+.toast.show { opacity: 1; }
 </style>
 </head>
-
 <body>
 
-<!-- ================= HALAMAN 1: RENCANA ================= -->
-
 <div id="halamanRencana">
-
   <div class="header-rencana">
     <h1>NAVIGASI PRIBADI</h1>
     <p>Atur Perjalanan Anda</p>
   </div>
-
   <div class="form-container">
-
     <div class="form-group">
       <label>📍 TITIK AWAL (Posisi Saat Ini)</label>
-      <input
-        type="text"
-        id="inputAwal"
-        readonly
-        value="Mencari GPS..."
-      >
+      <input type="text" id="inputAwal" readonly value="Mencari GPS...">
     </div>
-
     <div class="form-group">
       <label>🎯 TITIK TUJUAN</label>
-
-      <input
-        type="text"
-        id="inputTujuan"
-        placeholder="Ketik alamat tujuan..."
-      >
-
+      <input type="text" id="inputTujuan" placeholder="Ketik alamat tujuan...">
       <div class="btn-group">
-        <button class="btn-wa" onclick="tempelWA()">
-          📋 Tempel WA
-        </button>
-
-        <button class="btn-peta" onclick="pilihDiPeta()">
-          🗺️ Pilih di Peta
-        </button>
+        <button class="btn-wa" onclick="tempelWA()">📋 Tempel WA</button>
+        <button class="btn-peta" onclick="pilihDiPeta()">🗺️ Pilih di Peta</button>
       </div>
-
       <div id="mapRencana"></div>
-
     </div>
-
   </div>
-
-  <button
-    class="btn-mulai"
-    id="btnMulai"
-    onclick="mulaiPerjalanan()"
-    disabled
-  >
-    🚀 MULAI PERJALANAN
-  </button>
-
+  <button class="btn-mulai" id="btnMulai" onclick="mulaiPerjalanan()" disabled>🚀 MULAI PERJALANAN</button>
 </div>
 
-<!-- ================= HALAMAN 2: NAVIGASI ================= -->
-
 <div id="halamanNavigasi">
-
   <div id="map"></div>
-
   <div class="panel-atas">
-
     <button class="btn-batal" onclick="batalPerjalanan()">
-
-      <svg
-        viewBox="0 0 100 120"
-        style="width:32px;height:32px;filter:drop-shadow(0px 2px 4px rgba(0,0,0,.4));"
-      >
-        <path
-          d="M 50 0 C 22.4 0 0 22.4 0 50 C 0 85 50 120 50 120 C 50 120 100 85 100 50 C 100 22.4 77.6 0 50 0 Z"
-          fill="#ff8100"
-        />
-        <circle
-          cx="50"
-          cy="45"
-          r="20"
-          fill="#ffffff"
-          opacity="0.2"
-        />
+      <svg viewBox="0 0 100 120" style="width:32px;height:32px;filter:drop-shadow(0px 2px 4px rgba(0,0,0,.4));">
+        <path d="M 50 0 C 22.4 0 0 22.4 0 50 C 0 85 50 120 50 120 C 50 120 100 85 100 50 C 100 22.4 77.6 0 50 0 Z" fill="#ff8100" />
+        <circle cx="50" cy="45" r="20" fill="#ffffff" opacity="0.2"/>
       </svg>
-
     </button>
-
     <div class="tujuan-text">
-
       <div id="tujuanNama">Tujuan</div>
-
-      <span class="status-gps" id="gpsStatus">
-        MENCARI GPS...
-      </span>
-
+      <span class="status-gps" id="gpsStatus">MENCARI GPS...</span>
     </div>
-
   </div>
-
   <div class="instruksi-box" id="instruksiBox">
-
-    <div class="instruksi-icon" id="turnIcon">
-      ⬆️
-    </div>
-
+    <div class="instruksi-icon" id="turnIcon">⬆️</div>
     <div style="flex:1;">
-
-      <div class="instruksi-text" id="turnText">
-        Driver: SOREN SUHENDRO
-      </div>
-
-      <div class="instruksi-dist" id="turnDist">
-        -
-      </div>
-
+      <div class="instruksi-text" id="turnText">Driver: SOREN SUHENDRO</div>
+      <div class="instruksi-dist" id="turnDist">-</div>
     </div>
-
-    <img
-      src="foto-driver.JPG"
-      alt="Driver"
-      class="foto-driver"
-    >
-
+    <img src="foto-driver.JPG" alt="Driver" class="foto-driver">
   </div>
-
   <div class="speedometer">
-
     <div class="speed-val" id="speedVal">0</div>
     <div class="speed-unit">km/j</div>
-
   </div>
-
-  <button
-    class="btn-recenter"
-    id="btnRecenter"
-    onclick="kembaliKePosisiSaya()"
-  >
-    📍
-  </button>
-
+  <button class="btn-recenter" id="btnRecenter" onclick="kembaliKePosisiSaya()">📍</button>
   <div class="panel-bawah">
-
     <div class="info-box">
       <div class="info-label">Sisa Jarak</div>
       <div class="info-value" id="sisaJarak">-</div>
     </div>
-
-    <div
-      class="info-box"
-      style="border-left:1px solid #eee;border-right:1px solid #eee;"
-    >
+    <div class="info-box" style="border-left:1px solid #eee;border-right:1px solid #eee;">
       <div class="info-label">Waktu Tempuh</div>
       <div class="info-value" id="estimasiWaktu">-</div>
     </div>
-
     <div class="info-box">
       <div class="info-label">Tiba Pukul</div>
       <div class="info-value" id="jamTiba">-</div>
     </div>
-
   </div>
-
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- ================= LIBRARY MAPLIBRE ================= -->
-
 <script src="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js"></script>
-
 <script>
-
-// ============================================================
+// KODE JAVASCRIPT BAGIAN 2 AKAN DITEMPEL DI SINI
+  // ============================================================
 // KONFIGURASI TOMTOM
-// ISI API KEY TOMTOM MILIK SOREN DI SINI
 // ============================================================
-
 const TOMTOM_API_KEY = "duPP6hddpLvDr8U7xEN9Pit3pMKXD3Xm";
-
-const TOMTOM_STYLE_URL =
-  "https://api.tomtom.com/map/1/style/22.2.1-9/2/basic_street-light.json?key=" +
-  encodeURIComponent(TOMTOM_API_KEY);
+const TOMTOM_STYLE_URL = "https://api.tomtom.com/map/1/style/22.2.1-9/2/basic_street-light.json?key=" + encodeURIComponent(TOMTOM_API_KEY);
 
 function tomtomSiap() {
-
-  return TOMTOM_API_KEY &&
-    TOMTOM_API_KEY !== "duPP6hddpLvDr8U7xEN9Pit3pMKXD3Xm" &&
-    TOMTOM_API_KEY.trim().length > 10;
-
+  return TOMTOM_API_KEY && TOMTOM_API_KEY !== "duPP6hddpLvDr8U7xEN9Pit3pMKXD3Xm" && TOMTOM_API_KEY.trim().length > 10;
 }
 
 // ============================================================
 // STATE APLIKASI
 // ============================================================
-
 let map = null;
 let mapRencana = null;
-
 let posisiSaya = null;
 let titikTujuan = null;
-
 let followMode = true;
 let modePilihTujuan = false;
 let heading = 0;
@@ -629,7 +164,6 @@ let markerTujuanRencana = null;
 
 let ruteData = null;
 let ruteAsli = [];
-
 let watchId = null;
 let lastRuteCalc = 0;
 let calcInProgress = false;
@@ -637,315 +171,46 @@ let isOffRoute = false;
 
 let lastPosForSpeed = null;
 let lastTimeForSpeed = 0;
-
 let wakeLock = null;
 let suaraPerempuan = null;
-
 let instruksiTerakhir = "";
 let belokan200SudahBerbunyi = false;
 let belokan50SudahBerbunyi = false;
 
-// ============================================================
-// ID SOURCE DAN LAYER TOMTOM / MAPLIBRE
-// ============================================================
-
 const TT_SOURCE_AKURASI = "soren-gps-accuracy";
-
-const TT_SOURCE_RUTE_LEWAT =
-  "soren-route-traveled";
-
-const TT_SOURCE_RUTE_SISA =
-  "soren-route-remaining";
-
-const TT_SOURCE_RUTE_GLOW =
-  "soren-route-glow";
+const TT_SOURCE_RUTE_LEWAT = "soren-route-traveled";
+const TT_SOURCE_RUTE_SISA = "soren-route-remaining";
+const TT_SOURCE_RUTE_GLOW = "soren-route-glow";
 
 // ============================================================
 // PEMBUAT MARKER
 // ============================================================
-
 function buatElemenMobil() {
-
   const el = document.createElement("div");
-
   el.className = "tt-marker";
-
-  el.innerHTML = `
-    <img
-      id="mobilSaya"
-      src="mobil.png"
-      alt="Posisi kendaraan"
-      style="transition: transform 350ms ease-out; will-change: transform;"
-    >
-  `;
-
+  el.innerHTML = `<img id="mobilSaya" src="mobil.png" alt="Posisi kendaraan" style="transition: transform 350ms ease-out; will-change: transform;">`;
   return el;
-
 }
 
 function buatElemenTujuan() {
-
   const el = document.createElement("div");
-
   el.className = "tt-destination";
-
   el.innerHTML = `
-
     <svg viewBox="0 0 100 120" width="100%" height="100%">
-
-      <path
-        d="M 50 0 C 22.4 0 0 22.4 0 50 C 0 85 50 120 50 120 C 50 120 100 85 100 50 C 100 22.4 77.6 0 50 0 Z"
-        fill="#ff8100"
-      />
-
-      <circle
-        cx="50"
-        cy="45"
-        r="18"
-        fill="#ffffff"
-        opacity="0.3"
-      />
-
+      <path d="M 50 0 C 22.4 0 0 22.4 0 50 C 0 85 50 120 50 120 C 50 120 100 85 100 50 C 100 22.4 77.6 0 50 0 Z" fill="#ff8100" />
+      <circle cx="50" cy="45" r="18" fill="#ffffff" opacity="0.3"/>
     </svg>
-
   `;
-
   return el;
-
 }
 
 function tambahMarkerTujuanPeta(peta, koordinat) {
-
-  return new maplibregl.Marker({
-
-    element: buatElemenTujuan(),
-    anchor: "bottom"
-
-  })
-  .setLngLat(koordinat)
-  .addTo(peta);
-
+  return new maplibregl.Marker({ element: buatElemenTujuan(), anchor: "bottom" }).setLngLat(koordinat).addTo(peta);
 }
 
 // ============================================================
 // INISIALISASI PETA TOMTOM
 // ============================================================
-
-function initMap() {
-
-  if (!tomtomSiap()) {
-
-    showToast(
-      "Isi TOMTOM_API_KEY terlebih dahulu pada bagian konfigurasi."
-    );
-
-    return;
-
-  }
-
-  if (!window.maplibregl) {
-
-    showToast(
-      "Library peta gagal dimuat. Periksa koneksi internet."
-    );
-
-    return;
-
-  }
-
-  // PETA UTAMA
-
-  map = new maplibregl.Map({
-
-    container: "map",
-
-    style: TOMTOM_STYLE_URL,
-
-    center: [106.936, -6.387],
-
-    zoom: 16,
-
-    attributionControl: true,
-
-    pitchWithRotate: false
-
-  });
-
-  map.addControl(
-
-    new maplibregl.NavigationControl({
-
-      showCompass: false,
-      visualizePitch: false
-
-    }),
-
-    "top-right"
-
-  );
-
-  map.on("load", function() {
-
-    siapkanLayerPeta(map);
-
-    if (posisiSaya) {
-      perbaruiMarkerGPS();
-    }
-
-  });
-
-  // DETEKSI PETA DIGESER MANUAL
-
-  map.on("dragstart", function() {
-
-    followMode = false;
-
-  });
-
-  map.on("zoomstart", function() {
-
-    followMode = false;
-
-  });
-
-  map.on("rotatestart", function() {
-
-    followMode = false;
-
-  });
-
-  map.on("pitchstart", function() {
-
-    followMode = false;
-
-  });
-
-  map.on("error", function(e) {
-
-    console.error("MapLibre error:", e.error || e);
-
-  });
-
-  // PETA MINI RENCANA
-
-  mapRencana = new maplibregl.Map({
-
-    container: "mapRencana",
-
-    style: TOMTOM_STYLE_URL,
-
-    center: [106.936, -6.387],
-
-    zoom: 14,
-
-    attributionControl: false,
-
-    interactive: true
-
-  });
-
-  mapRencana.addControl(
-
-    new maplibregl.NavigationControl({
-
-      showCompass: false,
-      visualizePitch: false
-
-    }),
-
-    "top-right"
-
-  );
-
-  mapRencana.on("load", function() {
-
-    if (posisiSaya) {
-
-      mapRencana.setCenter([
-        posisiSaya.lng,
-        posisiSaya.lat
-      ]);
-
-    }
-
-  });
-
-  mapRencana.on("click", function(e) {
-
-    if (!modePilihTujuan) return;
-
-    pilihKoordinatTujuan([
-      e.lngLat.lng,
-      e.lngLat.lat
-    ]);
-
-  });
-
-}
-
-  
-    followMode = false;
-
-    const btn = document.getElementById("btnRecenter");
-
-    if (btn) {
-      btn.style.background = "#7138e8";
-    }
-
-  });
-
-  // KLIK PETA UNTUK MEMILIH TUJUAN
-
-  map.on("click", function(e) {
-
-    if (!modePilihTujuan) return;
-
-    modePilihTujuan = false;
-
-    document.getElementById("halamanNavigasi").style.display = "none";
-
-    document.getElementById("halamanRencana").style.display = "flex";
-
-    const lat = e.lngLat.lat;
-    const lng = e.lngLat.lng;
-
-    setTujuan(lat, lng, "Titik dari Peta");
-
-    document.getElementById("inputTujuan").value =
-      lat.toFixed(6) + ", " + lng.toFixed(6);
-
-    setTimeout(function() {
-
-      tampilkanPetaRencana(lat, lng);
-
-    }, 150);
-
-    showToast("Lokasi tujuan dipilih dari peta");
-
-    cekFormRencana();
-
-  });
-
-  // PETA MINI
-
-  mapRencana = new maplibregl.Map({
-
-    container: "mapRencana",
-
-    style: TOMTOM_STYLE_URL,
-
-    center: [106.936, -6.387],
-
-    zoom: 15,
-
-    attributionControl: true,
-
-    interactive: true,
-
-    pitchWithRotate: false
-
-  });
-
 function initMap() {
   if (!tomtomSiap()) {
     showToast("Isi TOMTOM_API_KEY terlebih dahulu pada bagian konfigurasi.");
@@ -982,12 +247,12 @@ function initMap() {
   map.on("zoomstart", function() { followMode = false; });
   map.on("rotatestart", function() { followMode = false; });
   map.on("pitchstart", function() { followMode = false; });
-  
+
   map.on("error", function(e) {
     console.error("MapLibre error:", e.error || e);
   });
 
-  // KLIK PETA UNTUK MEMILIH TUJUAN
+  // KLIK PETA UTAMA UNTUK MEMILIH TUJUAN
   map.on("click", function(e) {
     if (!modePilihTujuan) return;
     modePilihTujuan = false;
@@ -1021,7 +286,6 @@ function initMap() {
     if (titikTujuan) perbaruiMarkerTujuanRencana();
   });
 
-  // KLIK PETA MINI UNTUK MEMILIH TUJUAN (Saat modePilihTujuan aktif)
   mapRencana.on("click", function(e) {
     if (!modePilihTujuan) return;
     const lat = e.lngLat.lat;
@@ -1038,2137 +302,611 @@ function initMap() {
 // ============================================================
 // SOURCE DAN LAYER PETA
 // ============================================================
-
-function geojsonKosong() {
-
-  return {
-
-    type: "FeatureCollection",
-
-    features: []
-
-  };
-
-}
+function geojsonKosong() { return { type: "FeatureCollection", features: [] }; }
 
 function siapkanLayerPeta(peta) {
-
   if (!peta || !peta.isStyleLoaded()) return;
 
-  // LINGKARAN AKURASI GPS
-
   if (!peta.getSource(TT_SOURCE_AKURASI)) {
-
-    peta.addSource(TT_SOURCE_AKURASI, {
-
-      type: "geojson",
-
-      data: geojsonKosong()
-
-    });
-
-    peta.addLayer({
-
-      id: "soren-gps-accuracy-fill",
-
-      type: "fill",
-
-      source: TT_SOURCE_AKURASI,
-
-      paint: {
-
-        "fill-color": "#7138e8",
-
-        "fill-opacity": 0.10
-
-      }
-
-    });
-
-    peta.addLayer({
-
-      id: "soren-gps-accuracy-line",
-
-      type: "line",
-
-      source: TT_SOURCE_AKURASI,
-
-      paint: {
-
-        "line-color": "#7138e8",
-
-        "line-width": 1,
-
-        "line-opacity": 0.55
-
-      }
-
-    });
-
+    peta.addSource(TT_SOURCE_AKURASI, { type: "geojson", data: geojsonKosong() });
+    peta.addLayer({ id: "soren-gps-accuracy-fill", type: "fill", source: TT_SOURCE_AKURASI, paint: { "fill-color": "#7138e8", "fill-opacity": 0.10 } });
+    peta.addLayer({ id: "soren-gps-accuracy-line", type: "line", source: TT_SOURCE_AKURASI, paint: { "line-color": "#7138e8", "line-width": 1, "line-opacity": 0.55 } });
   }
-
-  // GARIS YANG SUDAH DILALUI
 
   if (!peta.getSource(TT_SOURCE_RUTE_LEWAT)) {
-
-    peta.addSource(TT_SOURCE_RUTE_LEWAT, {
-
-      type: "geojson",
-
-      data: geojsonKosong()
-
-    });
-
-    peta.addLayer({
-
-      id: "soren-route-traveled-line",
-
-      type: "line",
-
-      source: TT_SOURCE_RUTE_LEWAT,
-
-      layout: {
-
-        "line-join": "round",
-
-        "line-cap": "round"
-
-      },
-
-      paint: {
-
-        "line-color": "#8b5cf6",
-
-        "line-width": 6,
-
-        "line-opacity": 0.40
-
-      }
-
-    });
-
+    peta.addSource(TT_SOURCE_RUTE_LEWAT, { type: "geojson", data: geojsonKosong() });
+    peta.addLayer({ id: "soren-route-traveled-line", type: "line", source: TT_SOURCE_RUTE_LEWAT, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#8b5cf6", "line-width": 6, "line-opacity": 0.40 } });
   }
-
-  // EFEK GLOW RUTE
 
   if (!peta.getSource(TT_SOURCE_RUTE_GLOW)) {
-
-    peta.addSource(TT_SOURCE_RUTE_GLOW, {
-
-      type: "geojson",
-
-      data: geojsonKosong()
-
-    });
-
-    peta.addLayer({
-
-      id: "soren-route-glow-line",
-
-      type: "line",
-
-      source: TT_SOURCE_RUTE_GLOW,
-
-      layout: {
-
-        "line-join": "round",
-
-        "line-cap": "round"
-
-      },
-
-      paint: {
-
-        "line-color": "#7c3aed",
-
-        "line-width": 12,
-
-        "line-opacity": 0.80,
-
-        "line-blur": 1.5
-
-      }
-
-    });
-
+    peta.addSource(TT_SOURCE_RUTE_GLOW, { type: "geojson", data: geojsonKosong() });
+    peta.addLayer({ id: "soren-route-glow-line", type: "line", source: TT_SOURCE_RUTE_GLOW, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#7c3aed", "line-width": 12, "line-opacity": 0.80, "line-blur": 1.5 } });
   }
-
-  // GARIS INTI RUTE
 
   if (!peta.getSource(TT_SOURCE_RUTE_SISA)) {
-
-    peta.addSource(TT_SOURCE_RUTE_SISA, {
-
-      type: "geojson",
-
-      data: geojsonKosong()
-
-    });
-
-    peta.addLayer({
-
-      id: "soren-route-remaining-line",
-
-      type: "line",
-
-      source: TT_SOURCE_RUTE_SISA,
-
-      layout: {
-
-        "line-join": "round",
-
-        "line-cap": "round"
-
-      },
-
-      paint: {
-
-        "line-color": "#ffffff",
-
-        "line-width": 3,
-
-        "line-opacity": 1
-
-      }
-
-    });
-
+    peta.addSource(TT_SOURCE_RUTE_SISA, { type: "geojson", data: geojsonKosong() });
+    peta.addLayer({ id: "soren-route-remaining-line", type: "line", source: TT_SOURCE_RUTE_SISA, layout: { "line-join": "round", "line-cap": "round" }, paint: { "line-color": "#ffffff", "line-width": 3, "line-opacity": 1 } });
   }
-
 }
 
-// ============================================================
-// UTILITAS GEOJSON
-// ============================================================
-
 function featureGaris(koordinat) {
-
-  return {
-
-    type: "Feature",
-
-    properties: {},
-
-    geometry: {
-
-      type: "LineString",
-
-      coordinates: koordinat
-
-    }
-
-  };
-
+  return { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: koordinat } };
 }
 
 function featureCollectionSatu(geometry) {
-
-  return {
-
-    type: "FeatureCollection",
-
-    features: [{
-
-      type: "Feature",
-
-      properties: {},
-
-      geometry: geometry
-
-    }]
-
-  };
-
+  return { type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: geometry }] };
 }
 
 function kosongkanGarisPeta() {
-
   if (!map || !map.isStyleLoaded()) return;
-
-  [
-
-    TT_SOURCE_RUTE_LEWAT,
-    TT_SOURCE_RUTE_GLOW,
-    TT_SOURCE_RUTE_SISA
-
-  ].forEach(function(id) {
-
+  [TT_SOURCE_RUTE_LEWAT, TT_SOURCE_RUTE_GLOW, TT_SOURCE_RUTE_SISA].forEach(function(id) {
     const source = map.getSource(id);
-
-    if (source) {
-      source.setData(geojsonKosong());
-    }
-
+    if (source) source.setData(geojsonKosong());
   });
-
 }
 
-// ============================================================
-// LINGKARAN AKURASI GPS
-// ============================================================
-
 function buatGeoJSONLingkaran(lat, lng, radiusMeter) {
-
-  const koordinat = [];
-
-  const jumlahTitik = 64;
-
-  const radiusBumi = 6378137;
-
-  const latRad = lat * Math.PI / 180;
-
-  const lngRad = lng * Math.PI / 180;
-
-  const sudutJarak = Math.max(1, radiusMeter) / radiusBumi;
-
+  const koordinat = [], jumlahTitik = 64, radiusBumi = 6378137, latRad = lat * Math.PI / 180, lngRad = lng * Math.PI / 180, sudutJarak = Math.max(1, radiusMeter) / radiusBumi;
   for (let i = 0; i <= jumlahTitik; i++) {
-
     const sudut = 2 * Math.PI * i / jumlahTitik;
-
-    const lat2 = Math.asin(
-
-      Math.sin(latRad) * Math.cos(sudutJarak) +
-
-      Math.cos(latRad) *
-      Math.sin(sudutJarak) *
-      Math.cos(sudut)
-
-    );
-
-    const lng2 = lngRad + Math.atan2(
-
-      Math.sin(sudut) *
-      Math.sin(sudutJarak) *
-      Math.cos(latRad),
-
-      Math.cos(sudutJarak) -
-      Math.sin(latRad) *
-      Math.sin(lat2)
-
-    );
-
-    koordinat.push([
-
-      lng2 * 180 / Math.PI,
-
-      lat2 * 180 / Math.PI
-
-    ]);
-
+    const lat2 = Math.asin(Math.sin(latRad) * Math.cos(sudutJarak) + Math.cos(latRad) * Math.sin(sudutJarak) * Math.cos(sudut));
+    const lng2 = lngRad + Math.atan2(Math.sin(sudut) * Math.sin(sudutJarak) * Math.cos(latRad), Math.cos(sudutJarak) - Math.sin(latRad) * Math.sin(lat2));
+    koordinat.push([lng2 * 180 / Math.PI, lat2 * 180 / Math.PI]);
   }
-
-  return {
-
-    type: "Polygon",
-
-    coordinates: [koordinat]
-
-  };
-
+  return { type: "Polygon", coordinates: [koordinat] };
 }
 
 function perbaruiAkurasiGPS() {
-
   if (!map || !map.isStyleLoaded() || !posisiSaya) return;
-
   const source = map.getSource(TT_SOURCE_AKURASI);
-
-  if (!source) return;
-
-  source.setData(
-
-    featureCollectionSatu(
-
-      buatGeoJSONLingkaran(
-
-        posisiSaya.lat,
-
-        posisiSaya.lng,
-
-        posisiSaya.accuracy || 10
-
-      )
-
-    )
-
-  );
-
+  if (source) source.setData(featureCollectionSatu(buatGeoJSONLingkaran(posisiSaya.lat, posisiSaya.lng, posisiSaya.accuracy || 10)));
 }
 
-// ============================================================
-// PETA MINI RENCANA
-// ============================================================
-
 function tampilkanPetaRencana(lat, lng) {
-
   const container = document.getElementById("mapRencana");
-
   container.style.display = "block";
-
-  if (!mapRencana) {
-
-    showToast("Peta belum siap. Periksa API KEY TomTom.");
-
-    return;
-
-  }
-
+  if (!mapRencana) return;
   setTimeout(function() {
-
     mapRencana.resize();
-
-    mapRencana.flyTo({
-
-      center: [lng, lat],
-
-      zoom: 16,
-
-      essential: true
-
-    });
-
+    mapRencana.flyTo({ center: [lng, lat], zoom: 16, essential: true });
     perbaruiMarkerTujuanRencana();
-
   }, 180);
-
 }
 
 function perbaruiMarkerTujuanRencana() {
-
   if (!mapRencana || !titikTujuan) return;
-
-  const koordinat = [
-
-    titikTujuan.lng,
-
-    titikTujuan.lat
-
-  ];
-
+  const koordinat = [titikTujuan.lng, titikTujuan.lat];
   if (markerTujuanRencana) {
-
     markerTujuanRencana.setLngLat(koordinat);
-
   } else {
-
-    markerTujuanRencana = tambahMarkerTujuanPeta(
-
-      mapRencana,
-
-      koordinat
-
-    );
-
+    markerTujuanRencana = tambahMarkerTujuanPeta(mapRencana, koordinat);
   }
-
 }
 
 // ============================================================
 // GPS & UPDATE POSISI
 // ============================================================
-
 function mulaiGPS() {
-
   if (!navigator.geolocation) {
-
     showToast("Browser tidak mendukung GPS");
-
     return;
-
   }
-
-  watchId = navigator.geolocation.watchPosition(
-
-    onPosition,
-
-    onPositionError,
-
-    {
-
-      enableHighAccuracy: true,
-
-      maximumAge: 1000,
-
-      timeout: 15000
-
-    }
-
-  );
-
+  watchId = navigator.geolocation.watchPosition(onPosition, onPositionError, { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 });
 }
 
-// ============================================================
-// ANIMASI POSISI MOBIL — hanya untuk tampilan marker
-// Koordinat GPS asli tetap dipakai untuk rute dan perhitungan.
-// ============================================================
-
 function animasikanMarkerMobil(koordinatTujuan) {
-
   if (!markerSaya) return;
-
-  if (markerAnimationFrame) {
-    cancelAnimationFrame(markerAnimationFrame);
-    markerAnimationFrame = null;
-  }
-
+  if (markerAnimationFrame) { cancelAnimationFrame(markerAnimationFrame); markerAnimationFrame = null; }
   const posisiAwal = markerSaya.getLngLat();
   const awal = [posisiAwal.lng, posisiAwal.lat];
-  const mulai = performance.now();
-  const durasi = 650;
-
+  const mulai = performance.now(), durasi = 650;
   function langkah(waktu) {
-
     const progres = Math.min((waktu - mulai) / durasi, 1);
-    // Ease-in-out agar gerakan tidak terasa patah di awal/akhir.
     const halus = progres * progres * (3 - 2 * progres);
-
     const lng = awal[0] + (koordinatTujuan[0] - awal[0]) * halus;
     const lat = awal[1] + (koordinatTujuan[1] - awal[1]) * halus;
-
     markerSaya.setLngLat([lng, lat]);
-
-    if (progres < 1) {
-      markerAnimationFrame = requestAnimationFrame(langkah);
-    } else {
-      markerAnimationFrame = null;
-    }
-
+    if (progres < 1) { markerAnimationFrame = requestAnimationFrame(langkah); } else { markerAnimationFrame = null; }
   }
-
   markerAnimationFrame = requestAnimationFrame(langkah);
-
 }
 
 function perbaruiMarkerGPS() {
-
   if (!map || !posisiSaya) return;
-
-  const koordinat = [
-
-    posisiSaya.lng,
-
-    posisiSaya.lat
-
-  ];
-
+  const koordinat = [posisiSaya.lng, posisiSaya.lat];
   if (!markerSaya) {
-
-    markerSaya = new maplibregl.Marker({
-
-      element: buatElemenMobil(),
-
-      anchor: "center"
-
-    })
-
-    .setLngLat(koordinat)
-
-    .addTo(map);
-
+    markerSaya = new maplibregl.Marker({ element: buatElemenMobil(), anchor: "center" }).setLngLat(koordinat).addTo(map);
   } else {
-
     animasikanMarkerMobil(koordinat);
-
   }
-
   perbaruiAkurasiGPS();
-
 }
 
 function onPosition(position) {
-
-  const lat = position.coords.latitude;
-
-  const lng = position.coords.longitude;
-
-  const acc = position.coords.accuracy;
-
-  posisiSaya = {
-
-    lat: lat,
-
-    lng: lng,
-
-    accuracy: acc
-
-  };
-
-  // STATUS GPS
+  const lat = position.coords.latitude, lng = position.coords.longitude, acc = position.coords.accuracy;
+  posisiSaya = { lat: lat, lng: lng, accuracy: acc };
 
   const statusEl = document.getElementById("gpsStatus");
-
-  statusEl.textContent =
-    "GPS AKTIF (Akurasi: " + Math.round(acc) + "m)";
-
+  statusEl.textContent = "GPS AKTIF (Akurasi: " + Math.round(acc) + "m)";
   statusEl.style.color = "#18a84b";
 
-  // INPUT TITIK AWAL
-
   const inputAwal = document.getElementById("inputAwal");
-
-  if (
-
-    inputAwal &&
-
-    document.getElementById("halamanRencana").style.display !== "none"
-
-  ) {
-
-    inputAwal.value =
-      lat.toFixed(6) + ", " + lng.toFixed(6);
-
+  if (inputAwal && document.getElementById("halamanRencana").style.display !== "none") {
+    inputAwal.value = lat.toFixed(6) + ", " + lng.toFixed(6);
     cekFormRencana();
-
   }
 
   hitungKecepatan(lat, lng);
-
   perbaruiMarkerGPS();
-
   updateHeading(lat, lng);
 
-  // CEK POSISI PADA RUTE
-
-  if (
-
-    titikTujuan &&
-
-    document.getElementById("halamanNavigasi").style.display === "block"
-
-  ) {
-
+  if (titikTujuan && document.getElementById("halamanNavigasi").style.display === "block") {
     cekPosisiDiRute();
-
   }
-
-  // FOLLOW GPS
 
   if (followMode && map) {
-
-    map.easeTo({
-
-      center: [lng, lat],
-
-      duration: 450,
-
-      essential: true
-
-    });
-
+    map.easeTo({ center: [lng, lat], duration: 450, essential: true });
   }
-
 }
 
 function onPositionError(err) {
-
   console.warn("GPS error:", err);
-
   const statusEl = document.getElementById("gpsStatus");
-
   statusEl.textContent = "GPS ERROR / IZIN DITOLAK";
-
   statusEl.style.color = "#ff3b30";
-
-  showToast(
-    "GPS tidak tersedia. Periksa izin lokasi perangkat."
-  );
-
+  showToast("GPS tidak tersedia. Periksa izin lokasi perangkat.");
 }
 
 // ============================================================
 // KECEPATAN & HEADING
 // ============================================================
-
 function hitungKecepatan(lat, lng) {
-
   const now = Date.now();
-
   if (lastPosForSpeed && lastTimeForSpeed) {
-
-    const jarak = jarakMeter(
-
-      lastPosForSpeed.lat,
-
-      lastPosForSpeed.lng,
-
-      lat,
-
-      lng
-
-    );
-
+    const jarak = jarakMeter(lastPosForSpeed.lat, lastPosForSpeed.lng, lat, lng);
     const waktuDetik = (now - lastTimeForSpeed) / 1000;
-
     if (waktuDetik > 0.5) {
-
       let kecepatan = (jarak / waktuDetik) * 3.6;
-
       if (kecepatan > 200) kecepatan = 0;
-
-      document.getElementById("speedVal").textContent =
-        Math.round(kecepatan);
-
-      lastPosForSpeed = {
-
-        lat: lat,
-
-        lng: lng
-
-      };
-
+      document.getElementById("speedVal").textContent = Math.round(kecepatan);
+      lastPosForSpeed = { lat: lat, lng: lng };
       lastTimeForSpeed = now;
-
     }
-
   } else {
-
-    lastPosForSpeed = {
-
-      lat: lat,
-
-      lng: lng
-
-    };
-
+    lastPosForSpeed = { lat: lat, lng: lng };
     lastTimeForSpeed = now;
-
   }
-
 }
 
 function updateHeading(lat, lng) {
-
   if (window._lastPosHeading) {
-
     const dLat = lat - window._lastPosHeading.lat;
-
     const dLng = lng - window._lastPosHeading.lng;
-
     const dist = Math.sqrt(dLat * dLat + dLng * dLng);
-
     if (dist > 0.00003) {
-
-      const bearing = Math.atan2(
-
-        dLng * Math.cos(lat * Math.PI / 180),
-
-        dLat
-
-      ) * 180 / Math.PI;
-
+      const bearing = Math.atan2(dLng * Math.cos(lat * Math.PI / 180), dLat) * 180 / Math.PI;
       heading = (bearing + 360) % 360;
-
       const mobilEl = document.getElementById("mobilSaya");
-
-      if (mobilEl) {
-        mobilEl.style.transform = "rotate(" + heading + "deg)";
-      }
-
+      if (mobilEl) mobilEl.style.transform = "rotate(" + heading + "deg)";
     }
-
   }
-
-  window._lastPosHeading = {
-
-    lat: lat,
-
-    lng: lng
-
-  };
-
+  window._lastPosHeading = { lat: lat, lng: lng };
 }
 
-  
 // ============================================================
 // UTILITAS UI
 // ============================================================
-
 function showToast(msg, duration) {
-
   duration = duration || 2500;
-
   const t = document.getElementById("toast");
-
   t.textContent = msg;
-
   t.classList.add("show");
-
   clearTimeout(t._timer);
-
-  t._timer = setTimeout(function() {
-
-    t.classList.remove("show");
-
-  }, duration);
-
+  t._timer = setTimeout(function() { t.classList.remove("show"); }, duration);
 }
 
 function kembaliKePosisiSaya() {
-
   followMode = true;
-
   const btn = document.getElementById("btnRecenter");
-
-  if (btn) {
-    btn.style.background = "#18a84b";
-  }
-
+  if (btn) btn.style.background = "#18a84b";
   if (posisiSaya && map) {
-
-    map.flyTo({
-
-      center: [
-
-        posisiSaya.lng,
-
-        posisiSaya.lat
-
-      ],
-
-      zoom: Math.max(map.getZoom(), 16),
-
-      essential: true
-
-    });
-
+    map.flyTo({ center: [posisiSaya.lng, posisiSaya.lat], zoom: Math.max(map.getZoom(), 16), essential: true });
   } else {
-
     showToast("Posisi GPS belum tersedia");
-
   }
-
 }
 
 // ============================================================
-// WAKE LOCK
+// WAKE LOCK & SUARA
 // ============================================================
-
 async function mintaWakeLock() {
-
   try {
-
-    if ("wakeLock" in navigator) {
-
-      wakeLock = await navigator.wakeLock.request("screen");
-
-      console.log("Wake Lock aktif");
-
-    }
-
-  } catch (err) {
-
-    console.warn("Gagal Wake Lock:", err);
-
-  }
-
+    if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen");
+  } catch (err) { console.warn("Gagal Wake Lock:", err); }
 }
 
 function lepasWakeLock() {
-
-  if (wakeLock !== null) {
-
-    wakeLock.release().then(function() {
-
-      wakeLock = null;
-
-    });
-
-  }
-
+  if (wakeLock !== null) wakeLock.release().then(function() { wakeLock = null; });
 }
 
 document.addEventListener("visibilitychange", async function() {
-
-  if (
-
-    wakeLock !== null &&
-
-    document.visibilityState === "visible"
-
-  ) {
-
-    if (
-
-      document.getElementById("halamanNavigasi").style.display === "block"
-
-    ) {
-
-      mintaWakeLock();
-
-    }
-
+  if (wakeLock !== null && document.visibilityState === "visible") {
+    if (document.getElementById("halamanNavigasi").style.display === "block") mintaWakeLock();
   }
-
 });
 
-// ============================================================
-// TEXT TO SPEECH
-// ============================================================
-
 function muatSuara() {
-
   const daftarSuara = window.speechSynthesis.getVoices();
-
-  const suaraID = daftarSuara.filter(function(s) {
-
-    return s.lang.includes("id") || s.lang.includes("ID");
-
-  });
-
+  const suaraID = daftarSuara.filter(function(s) { return s.lang.includes("id") || s.lang.includes("ID"); });
   if (suaraID.length > 0) {
-
-    const perempuan = suaraID.find(function(s) {
-
-      return (
-
-        s.name.toLowerCase().includes("female") ||
-
-        s.name.toLowerCase().includes("wanita")
-
-      );
-
-    });
-
+    const perempuan = suaraID.find(function(s) { return s.name.toLowerCase().includes("female") || s.name.toLowerCase().includes("wanita"); });
     suaraPerempuan = perempuan || suaraID[0];
-
   } else {
-
-    const inggris = daftarSuara.filter(function(s) {
-
-      return s.lang.includes("en");
-
-    });
-
-    suaraPerempuan =
-
-      inggris.find(function(s) {
-
-        return s.name.toLowerCase().includes("female");
-
-      }) ||
-
-      inggris[0] ||
-
-      daftarSuara[0];
-
+    const inggris = daftarSuara.filter(function(s) { return s.lang.includes("en"); });
+    suaraPerempuan = inggris.find(function(s) { return s.name.toLowerCase().includes("female"); }) || inggris[0] || daftarSuara[0];
   }
-
 }
 
 if ("speechSynthesis" in window) {
-
   window.speechSynthesis.onvoiceschanged = muatSuara;
-
   muatSuara();
-
 }
 
 function putarSuara(teks) {
-
   if (!("speechSynthesis" in window)) return;
-
   window.speechSynthesis.cancel();
-
   const ucapan = new SpeechSynthesisUtterance(teks);
-
   ucapan.lang = "id-ID";
-
   ucapan.rate = 0.9;
-
   ucapan.pitch = 1.0;
-
-  if (suaraPerempuan) {
-    ucapan.voice = suaraPerempuan;
-  }
-
+  if (suaraPerempuan) ucapan.voice = suaraPerempuan;
   window.speechSynthesis.speak(ucapan);
-
 }
 
 // ============================================================
-// FORM & PARSING LOKASI
+// FORM & PENCARIAN
 // ============================================================
-
 function cekFormRencana() {
-
   const awal = document.getElementById("inputAwal").value;
-
   const tujuan = document.getElementById("inputTujuan").value;
-
-  document.getElementById("btnMulai").disabled = !(
-
-    awal &&
-
-    awal !== "Mencari GPS..." &&
-
-    tujuan.length > 3
-
-  );
-
+  document.getElementById("btnMulai").disabled = !(awal && awal !== "Mencari GPS..." && tujuan.length > 3);
 }
 
 function parseShareLocation(text) {
-
-  let m = text.match(
-    /(-?\d{1,3}\.\d+)[,\s]+(-?\d{1,3}\.\d+)/
-  );
-
+  let m = text.match(/(-?\d{1,3}\.\d+)[,\s]+(-?\d{1,3}\.\d+)/);
   if (m) {
-
-    const a = parseFloat(m[1]);
-
-    const b = parseFloat(m[2]);
-
-    if (a >= -90 && a <= 90 && b >= -180 && b <= 180) {
-
-      return {
-
-        lat: a,
-
-        lng: b
-
-      };
-
-    }
-
+    const a = parseFloat(m[1]), b = parseFloat(m[2]);
+    if (a >= -90 && a <= 90 && b >= -180 && b <= 180) return { lat: a, lng: b };
   }
-
   m = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-
-  if (m) {
-
-    return {
-
-      lat: parseFloat(m[1]),
-
-      lng: parseFloat(m[2])
-
-    };
-
-  }
-
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
   return null;
-
 }
 
 async function tempelWA() {
-
   try {
-
     const text = await navigator.clipboard.readText();
-
-    if (!text) {
-
-      showToast("Clipboard kosong");
-
-      return;
-
-    }
-
+    if (!text) { showToast("Clipboard kosong"); return; }
     const parsed = parseShareLocation(text);
-
     if (parsed) {
-
-      document.getElementById("inputTujuan").value =
-
-        parsed.lat.toFixed(6) + ", " +
-        parsed.lng.toFixed(6);
-
-      setTujuan(
-
-        parsed.lat,
-
-        parsed.lng,
-
-        "Koordinat dari WA"
-
-      );
-
+      document.getElementById("inputTujuan").value = parsed.lat.toFixed(6) + ", " + parsed.lng.toFixed(6);
+      setTujuan(parsed.lat, parsed.lng, "Koordinat dari WA");
       tampilkanPetaRencana(parsed.lat, parsed.lng);
-
       showToast("Koordinat berhasil diambil");
-
       cekFormRencana();
-
     } else {
-
       document.getElementById("inputTujuan").value = text;
-
       titikTujuan = null;
-
-      showToast(
-        "Alamat disalin. Tekan MULAI untuk mencari lokasi."
-      );
-
+      showToast("Alamat disalin. Tekan MULAI untuk mencari lokasi.");
       cekFormRencana();
-
     }
-
-  } catch (err) {
-
-    showToast(
-      "Gagal membaca clipboard. Tempel manual di kolom."
-    );
-
-  }
-
+  } catch (err) { showToast("Gagal membaca clipboard."); }
 }
 
 function pilihDiPeta() {
-
-  if (!map) {
-
-    showToast("Peta belum siap. Periksa API KEY TomTom.");
-
-    return;
-
-  }
-
+  if (!map) { showToast("Peta belum siap."); return; }
   document.getElementById("halamanRencana").style.display = "none";
-
   document.getElementById("halamanNavigasi").style.display = "block";
-
   modePilihTujuan = true;
-
   setTimeout(function() {
-
     map.resize();
-
-    if (posisiSaya) {
-
-      map.flyTo({
-
-        center: [
-
-          posisiSaya.lng,
-
-          posisiSaya.lat
-
-        ],
-
-        zoom: 17,
-
-        essential: true
-
-      });
-
-    }
-
+    if (posisiSaya) map.flyTo({ center: [posisiSaya.lng, posisiSaya.lat], zoom: 17, essential: true });
   }, 150);
-
-  showToast(
-    "Ketuk pada peta untuk memilih lokasi tujuan",
-    4000
-  );
-
+  showToast("Ketuk pada peta untuk memilih lokasi tujuan", 4000);
 }
 
-// ============================================================
-// PENCARIAN ALAMAT TOMTOM
-// ============================================================
-
 async function cariAlamatTomTom(query) {
-
-  if (!tomtomSiap()) {
-
-    throw new Error("API KEY TomTom belum diisi.");
-
-  }
-
-  let url =
-
-    "https://api.tomtom.com/search/2/search/" +
-
-    encodeURIComponent(query) +
-
-    ".json?key=" +
-
-    encodeURIComponent(TOMTOM_API_KEY) +
-
-    "&countrySet=ID&language=id-ID&limit=1";
-
-  if (posisiSaya) {
-
-    url +=
-
-      "&lat=" + posisiSaya.lat +
-
-      "&lon=" + posisiSaya.lng;
-
-  }
-
+  if (!tomtomSiap()) throw new Error("API KEY TomTom belum diisi.");
+  let url = "https://api.tomtom.com/search/2/search/" + encodeURIComponent(query) + ".json?key=" + encodeURIComponent(TOMTOM_API_KEY) + "&countrySet=ID&language=id-ID&limit=1";
+  if (posisiSaya) url += "&lat=" + posisiSaya.lat + "&lon=" + posisiSaya.lng;
   const response = await fetch(url);
-
-  if (!response.ok) {
-
-    throw new Error(
-      "TomTom Search gagal (" + response.status + ")."
-    );
-
-  }
-
+  if (!response.ok) throw new Error("TomTom Search gagal (" + response.status + ").");
   const data = await response.json();
-
-  if (!data.results || !data.results.length) {
-
-    return null;
-
-  }
-
+  if (!data.results || !data.results.length) return null;
   const hasil = data.results[0];
-
-  return {
-
-    lat: hasil.position.lat,
-
-    lng: hasil.position.lon,
-
-    nama:
-
-      hasil.address && hasil.address.freeformAddress
-
-        ? hasil.address.freeformAddress
-
-        : query
-
-  };
-
+  return { lat: hasil.position.lat, lng: hasil.position.lon, nama: hasil.address && hasil.address.freeformAddress ? hasil.address.freeformAddress : query };
 }
 
 // ============================================================
 // MULAI & BATAL PERJALANAN
 // ============================================================
-
 async function mulaiPerjalanan() {
-
-  const tujuanInput =
-
-    document.getElementById("inputTujuan").value.trim();
-
-  if (!tujuanInput) {
-
-    showToast("Tujuan belum diisi");
-
-    return;
-
-  }
-
-  if (!tomtomSiap()) {
-
-    showToast("Isi API KEY TomTom terlebih dahulu.");
-
-    return;
-
-  }
-
-  if (titikTujuan) {
-
-    prosesMulaiPerjalanan();
-
-    return;
-
-  }
+  const tujuanInput = document.getElementById("inputTujuan").value.trim();
+  if (!tujuanInput) { showToast("Tujuan belum diisi"); return; }
+  if (!tomtomSiap()) { showToast("Isi API KEY TomTom terlebih dahulu."); return; }
+  if (titikTujuan) { prosesMulaiPerjalanan(); return; }
 
   const tombol = document.getElementById("btnMulai");
-
   tombol.textContent = "⏳ MENCARI LOKASI...";
-
   try {
-
     const lokasi = await cariAlamatTomTom(tujuanInput);
-
     if (lokasi) {
-
-      setTujuan(
-
-        lokasi.lat,
-
-        lokasi.lng,
-
-        lokasi.nama
-
-      );
-
-      tampilkanPetaRencana(
-
-        lokasi.lat,
-
-        lokasi.lng
-
-      );
-
+      setTujuan(lokasi.lat, lokasi.lng, lokasi.nama);
+      tampilkanPetaRencana(lokasi.lat, lokasi.lng);
       prosesMulaiPerjalanan();
-
     } else {
-
-      showToast("Alamat tidak ditemukan oleh TomTom.");
-
+      showToast("Alamat tidak ditemukan.");
       tombol.textContent = "🚀 MULAI PERJALANAN";
-
     }
-
   } catch (e) {
-
-    console.error("TomTom Search:", e);
-
-    showToast(
-
-      e.message ||
-
-      "Gagal mencari alamat. Periksa koneksi."
-
-    );
-
+    showToast(e.message || "Gagal mencari alamat.");
     tombol.textContent = "🚀 MULAI PERJALANAN";
-
   }
-
 }
 
 function prosesMulaiPerjalanan() {
-
-  document.getElementById("btnMulai").textContent =
-
-    "🚀 MULAI PERJALANAN";
-
+  document.getElementById("btnMulai").textContent = "🚀 MULAI PERJALANAN";
   document.getElementById("halamanRencana").style.display = "none";
-
   document.getElementById("halamanNavigasi").style.display = "block";
-
   setTimeout(function() {
-
     if (map) {
-
       map.resize();
-
-      if (posisiSaya) {
-
-        map.flyTo({
-
-          center: [
-
-            posisiSaya.lng,
-
-            posisiSaya.lat
-
-          ],
-
-          zoom: 17,
-
-          essential: true
-
-        });
-
-      }
-
+      if (posisiSaya) map.flyTo({ center: [posisiSaya.lng, posisiSaya.lat], zoom: 17, essential: true });
     }
-
   }, 180);
-
   document.getElementById("instruksiBox").style.display = "flex";
-
   followMode = true;
-
   mintaWakeLock();
-
   hitungRuteTomTom(true);
-
-  setTimeout(function() {
-
-    putarSuara(
-      "Selamat menikmati perjalanan. Hati-hati selama perjalanan."
-    );
-
-  }, 1500);
-
+  setTimeout(function() { putarSuara("Selamat menikmati perjalanan. Hati-hati selama perjalanan."); }, 1500);
 }
 
 function batalPerjalanan() {
-
   lepasWakeLock();
-
-  if ("speechSynthesis" in window) {
-
-    window.speechSynthesis.cancel();
-
-  }
-
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   document.getElementById("halamanNavigasi").style.display = "none";
-
   document.getElementById("halamanRencana").style.display = "flex";
-
-  document.getElementById("btnMulai").textContent =
-
-    "🚀 MULAI PERJALANAN";
-
-  if (markerTujuan) {
-
-    markerTujuan.remove();
-
-    markerTujuan = null;
-
-  }
-
+  document.getElementById("btnMulai").textContent = "🚀 MULAI PERJALANAN";
+  if (markerTujuan) { markerTujuan.remove(); markerTujuan = null; }
   kosongkanGarisPeta();
-
   titikTujuan = null;
-
   ruteAsli = [];
-
   ruteData = null;
-
   isOffRoute = false;
-
   modePilihTujuan = false;
-
 }
 
 function setTujuan(lat, lng, nama) {
-
-  titikTujuan = {
-
-    lat: lat,
-
-    lng: lng,
-
-    nama: nama
-
-  };
-
+  titikTujuan = { lat: lat, lng: lng, nama: nama };
   document.getElementById("tujuanNama").textContent = nama;
-
   if (map) {
-
-    if (markerTujuan) {
-
-      markerTujuan.setLngLat([lng, lat]);
-
-    } else {
-
-      markerTujuan = tambahMarkerTujuanPeta(
-
-        map,
-
-        [lng, lat]
-
-      );
-
-    }
-
+    if (markerTujuan) markerTujuan.setLngLat([lng, lat]);
+    else markerTujuan = tambahMarkerTujuanPeta(map, [lng, lat]);
   }
-
   perbaruiMarkerTujuanRencana();
-
 }
 
 // ============================================================
 // ROUTING TOMTOM
 // ============================================================
-
 async function hitungRuteTomTom(force) {
-
   if (!posisiSaya || !titikTujuan || !map) return;
-
   if (calcInProgress) return;
-
   const now = Date.now();
-
   if (!force && now - lastRuteCalc < 5000) return;
-
   lastRuteCalc = now;
-
   calcInProgress = true;
 
-  const lokasi =
-
-    posisiSaya.lat + "," + posisiSaya.lng + ":" +
-
-    titikTujuan.lat + "," + titikTujuan.lng;
-
-  const url =
-
-    "https://api.tomtom.com/routing/1/calculateRoute/" +
-
-    lokasi +
-
-    "/json?key=" +
-
-    encodeURIComponent(TOMTOM_API_KEY) +
-
-    "&routeType=fastest&traffic=true&travelMode=car" +
-
-    "&instructionsType=text&language=id-ID&routeRepresentation=polyline";
+  const lokasi = posisiSaya.lat + "," + posisiSaya.lng + ":" + titikTujuan.lat + "," + titikTujuan.lng;
+  const url = "https://api.tomtom.com/routing/1/calculateRoute/" + lokasi + "/json?key=" + encodeURIComponent(TOMTOM_API_KEY) + "&routeType=fastest&traffic=true&travelMode=car&instructionsType=text&language=id-ID&routeRepresentation=polyline";
 
   try {
-
     const response = await fetch(url);
-
-    if (!response.ok) {
-
-      const detail = await response.text();
-
-      throw new Error(
-
-        "TomTom Routing gagal (" +
-
-        response.status +
-
-        "). " +
-
-        detail.slice(0, 180)
-
-      );
-
-    }
-
+    if (!response.ok) throw new Error("TomTom Routing gagal (" + response.status + ").");
     const data = await response.json();
-
-    if (
-
-      data.routes &&
-
-      data.routes.length > 0 &&
-
-      data.routes[0].legs &&
-
-      data.routes[0].legs[0]
-
-    ) {
-
+    
+    if (data.routes && data.routes.length > 0 && data.routes[0].legs && data.routes[0].legs[0]) {
       ruteData = data.routes[0];
-
       const points = ruteData.legs[0].points || [];
-
-      ruteAsli = points.map(function(p) {
-
-        return {
-
-          lat: p.latitude,
-
-          lng: p.longitude
-
-        };
-
-      });
-
+      ruteAsli = points.map(function(p) { return { lat: p.latitude, lng: p.longitude }; });
       
-      });
-
-      if (ruteAsli.length < 2) {
-
-        throw new Error(
-          "TomTom tidak mengembalikan geometri rute."
-        );
-
-      }
-
+      if (ruteAsli.length < 2) throw new Error("TomTom tidak mengembalikan geometri rute.");
+      
       instruksiTerakhir = "";
-
       belokan200SudahBerbunyi = false;
-
       belokan50SudahBerbunyi = false;
-
       isOffRoute = false;
-
+      
       siapkanLayerPeta(map);
-
       gambarRuteNeon(0);
-
       updateInfoJarakDariIdx(0);
-
       updateInstruksi(0);
-
     } else {
-
-      showToast(
-        "TomTom tidak menemukan rute untuk perjalanan ini."
-      );
-
+      showToast("TomTom tidak menemukan rute.");
     }
-
   } catch (err) {
-
-    console.error("TomTom Routing error:", err);
-
-    showToast(
-      err.message || "Koneksi rute TomTom gagal."
-    );
-
+    showToast(err.message || "Koneksi rute TomTom gagal.");
   } finally {
-
     calcInProgress = false;
-
   }
-
 }
 
 // ============================================================
-// CEK POSISI PADA RUTE
+// CEK POSISI DI RUTE
 // ============================================================
-
 function cekPosisiDiRute() {
-
   if (!posisiSaya || ruteAsli.length === 0) return;
-
-  let jarakMin = Infinity;
-
-  let idxTerdekat = 0;
-
+  let jarakMin = Infinity, idxTerdekat = 0;
   for (let i = 0; i < ruteAsli.length; i++) {
-
-    const d = jarakMeter(
-
-      posisiSaya.lat,
-
-      posisiSaya.lng,
-
-      ruteAsli[i].lat,
-
-      ruteAsli[i].lng
-
-    );
-
-    if (d < jarakMin) {
-
-      jarakMin = d;
-
-      idxTerdekat = i;
-
-    }
-
+    const d = jarakMeter(posisiSaya.lat, posisiSaya.lng, ruteAsli[i].lat, ruteAsli[i].lng);
+    if (d < jarakMin) { jarakMin = d; idxTerdekat = i; }
   }
-
-  const TOLERANSI = 55;
-
-  if (jarakMin > TOLERANSI) {
-
+  if (jarakMin > 55) {
     if (!isOffRoute) {
-
       isOffRoute = true;
-
-      showToast(
-        "Anda keluar jalur. Menghitung rute baru..."
-      );
-
+      showToast("Anda keluar jalur. Menghitung rute baru...");
       hitungRuteTomTom(true);
-
     }
-
   } else {
-
     isOffRoute = false;
-
     gambarRuteNeon(idxTerdekat);
-
     updateInfoJarakDariIdx(idxTerdekat);
-
     updateInstruksi(idxTerdekat);
-
   }
-
 }
 
 // ============================================================
-// GAMBAR GARIS NEON TOMTOM
+// GAMBAR GARIS NEON
 // ============================================================
-
 function gambarRuteNeon(idxTerdekat) {
-
   if (!map || !ruteAsli.length) return;
-
-  if (!map.isStyleLoaded()) {
-
-    map.once("idle", function() {
-
-      if (map && map.isStyleLoaded()) {
-
-        gambarRuteNeon(idxTerdekat);
-
-      }
-
-    });
-
-    return;
-
-  }
-
+  if (!map.isStyleLoaded()) { map.once("idle", function() { if (map && map.isStyleLoaded()) gambarRuteNeon(idxTerdekat); }); return; }
   siapkanLayerPeta(map);
-
-  // RUTE YANG SUDAH DILALUI
-
-  const lewat = ruteAsli
-
-    .slice(0, idxTerdekat + 1)
-
-    .map(function(p) {
-
-      return [p.lng, p.lat];
-
-    });
-
-  // RUTE YANG BELUM DILALUI
-
-  const sisa = ruteAsli
-
-    .slice(idxTerdekat)
-
-    .map(function(p) {
-
-      return [p.lng, p.lat];
-
-    });
+  
+  const lewat = ruteAsli.slice(0, idxTerdekat + 1).map(function(p) { return [p.lng, p.lat]; });
+  const sisa = ruteAsli.slice(idxTerdekat).map(function(p) { return [p.lng, p.lat]; });
 
   const sourceLewat = map.getSource(TT_SOURCE_RUTE_LEWAT);
-
   const sourceGlow = map.getSource(TT_SOURCE_RUTE_GLOW);
-
   const sourceSisa = map.getSource(TT_SOURCE_RUTE_SISA);
 
-  if (sourceLewat) {
-
-    sourceLewat.setData(
-
-      lewat.length > 1
-
-        ? featureGaris(lewat)
-
-        : geojsonKosong()
-
-    );
-
-  }
-
-  if (sourceGlow) {
-
-    sourceGlow.setData(
-
-      sisa.length > 1
-
-        ? featureGaris(sisa)
-
-        : geojsonKosong()
-
-    );
-
-  }
-
-  if (sourceSisa) {
-
-    sourceSisa.setData(
-
-      sisa.length > 1
-
-        ? featureGaris(sisa)
-
-        : geojsonKosong()
-
-    );
-
-  }
-
+  if (sourceLewat) sourceLewat.setData(lewat.length > 1 ? featureGaris(lewat) : geojsonKosong());
+  if (sourceGlow) sourceGlow.setData(sisa.length > 1 ? featureGaris(sisa) : geojsonKosong());
+  if (sourceSisa) sourceSisa.setData(sisa.length > 1 ? featureGaris(sisa) : geojsonKosong());
 }
 
 // ============================================================
-// PERHITUNGAN JARAK SISA
+// INFORMASI JARAK & WAKTU
 // ============================================================
-
 function hitungJarakSisaDariIdx(idx) {
-
   let sisa = 0;
-
-  for (let i = idx; i < ruteAsli.length - 1; i++) {
-
-    sisa += jarakMeter(
-
-      ruteAsli[i].lat,
-
-      ruteAsli[i].lng,
-
-      ruteAsli[i + 1].lat,
-
-      ruteAsli[i + 1].lng
-
-    );
-
-  }
-
+  for (let i = idx; i < ruteAsli.length - 1; i++) sisa += jarakMeter(ruteAsli[i].lat, ruteAsli[i].lng, ruteAsli[i + 1].lat, ruteAsli[i + 1].lng);
   return sisa;
-
 }
 
 function hitungJarakTerpakaiDariIdx(idx) {
-
   let terpakai = 0;
-
-  for (let i = 0; i < idx; i++) {
-
-    terpakai += jarakMeter(
-
-      ruteAsli[i].lat,
-
-      ruteAsli[i].lng,
-
-      ruteAsli[i + 1].lat,
-
-      ruteAsli[i + 1].lng
-
-    );
-
-  }
-
+  for (let i = 0; i < idx; i++) terpakai += jarakMeter(ruteAsli[i].lat, ruteAsli[i].lng, ruteAsli[i + 1].lat, ruteAsli[i + 1].lng);
   return terpakai;
-
 }
 
-// ============================================================
-// INFORMASI JARAK DAN WAKTU
-// ============================================================
-
 function updateInfoJarakDariIdx(idxTerdekat) {
-
   if (!ruteData || !ruteAsli.length) return;
-
   const sisa = hitungJarakSisaDariIdx(idxTerdekat);
-
-  document.getElementById("sisaJarak").textContent =
-
-    formatJarak(sisa);
-
-  // ESTIMASI WAKTU TOMTOM
-
-  const totalJarak = Number(
-
-    ruteData.summary && ruteData.summary.lengthInMeters
-
-      ? ruteData.summary.lengthInMeters
-
-      : hitungJarakSisaDariIdx(0)
-
-  );
-
-  const totalWaktu = Number(
-
-    ruteData.summary && ruteData.summary.travelTimeInSeconds
-
-      ? ruteData.summary.travelTimeInSeconds
-
-      : 0
-
-  );
-
-  const detikSisa =
-
-    totalJarak > 0 && totalWaktu > 0
-
-      ? totalWaktu * Math.min(1, sisa / totalJarak)
-
-      : sisa / (30000 / 3600);
-
+  document.getElementById("sisaJarak").textContent = formatJarak(sisa);
+  
+  const totalJarak = Number(ruteData.summary && ruteData.summary.lengthInMeters ? ruteData.summary.lengthInMeters : hitungJarakSisaDariIdx(0));
+  const totalWaktu = Number(ruteData.summary && ruteData.summary.travelTimeInSeconds ? ruteData.summary.travelTimeInSeconds : 0);
+  const detikSisa = totalJarak > 0 && totalWaktu > 0 ? totalWaktu * Math.min(1, sisa / totalJarak) : sisa / (30000 / 3600);
   const menitSisa = Math.round(detikSisa / 60);
+  document.getElementById("estimasiWaktu").textContent = menitSisa < 60 ? menitSisa + " mnt" : Math.floor(menitSisa / 60) + " j " + (menitSisa % 60) + " m";
+  
+  const waktuTiba = new Date(Date.now() + detikS
 
-  const teksWaktu =
-
-    menitSisa < 60
-
-      ? menitSisa + " mnt"
-
-      : Math.floor(menitSisa / 60) +
-
-        " j " +
-
-        (menitSisa % 60) +
-
-        " m";
-
-  document.getElementById("estimasiWaktu").textContent =
-
-    teksWaktu;
-
-  const waktuTiba = new Date(
-
-    Date.now() + detikSisa * 1000
-
-  );
-
-  document.getElementById("jamTiba").textContent =
-
-    waktuTiba.toLocaleTimeString("id-ID", {
-
-      hour: "2-digit",
-
-      minute: "2-digit"
-
-    }).replace(".", ":");
-
+          const waktuTiba = new Date(Date.now() + detikSisa * 1000);
+  document.getElementById("jamTiba").textContent = waktuTiba.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(".", ":");
 }
 
 // ============================================================
 // INSTRUKSI BELOKAN TOMTOM
 // ============================================================
-
 function updateInstruksi(idxTerdekat) {
-
-  if (
-
-    !ruteData ||
-
-    !ruteData.guidance ||
-
-    !ruteData.guidance.instructions
-
-  ) return;
-
+  if (!ruteData || !ruteData.guidance || !ruteData.guidance.instructions) return;
   const instructions = ruteData.guidance.instructions;
-
   if (!instructions.length) return;
 
-  const jarakKeIdx =
-
-    hitungJarakTerpakaiDariIdx(idxTerdekat);
-
-  let instruksiBerikutnya =
-
-    instructions[instructions.length - 1];
+  const jarakKeIdx = hitungJarakTerpakaiDariIdx(idxTerdekat);
+  let instruksiBerikutnya = instructions[instructions.length - 1];
 
   for (let i = 0; i < instructions.length; i++) {
-
-    if (
-
-      instructions[i].routeOffsetInMeters >= jarakKeIdx
-
-    ) {
-
+    if (instructions[i].routeOffsetInMeters >= jarakKeIdx) {
       instruksiBerikutnya = instructions[i];
-
       break;
-
     }
-
   }
 
-  const jarakInstruksi = Number(
-
-    instruksiBerikutnya.routeOffsetInMeters || jarakKeIdx
-
-  );
-
-  const distToNextTurn = Math.max(
-
-    0,
-
-    jarakInstruksi - jarakKeIdx
-
-  );
-
-  const maneuver = String(
-
-    instruksiBerikutnya.maneuver || ""
-
-  ).toUpperCase();
-
-  const message =
-
-    instruksiBerikutnya.message || "Lanjutkan perjalanan";
+  const jarakInstruksi = Number(instruksiBerikutnya.routeOffsetInMeters || jarakKeIdx);
+  const distToNextTurn = Math.max(0, jarakInstruksi - jarakKeIdx);
+  const maneuver = String(instruksiBerikutnya.maneuver || "").toUpperCase();
+  const message = instruksiBerikutnya.message || "Lanjutkan perjalanan";
 
   let icon = "⬆️";
-
   let teks = message;
 
-  if (maneuver.includes("ARRIVE")) {
-
-    icon = "🏁";
-
-    teks = "Tiba di Tujuan";
-
-  } else if (maneuver.includes("UTURN")) {
-
-    icon = "🔄";
-
-    teks = "Putar Balik";
-
-  } else if (maneuver.includes("LEFT")) {
-
-    icon = "⬅️";
-
-    teks = message || "Belok Kiri";
-
-  } else if (maneuver.includes("RIGHT")) {
-
-    icon = "➡️";
-
-    teks = message || "Belok Kanan";
-
-  } else if (maneuver.includes("ROUNDABOUT")) {
-
-    icon = "🔄";
-
-    teks = message || "Masuk Bundaran";
-
-  } else if (
-
-    maneuver.includes("EXIT") ||
-
-    maneuver.includes("MOTORWAY")
-
-  ) {
-
-    icon = "↗️";
-
-  } else if (maneuver.includes("KEEP")) {
-
-    icon = maneuver.includes("LEFT") ? "↖️" : "↗️";
-
-  }
+  if (maneuver.includes("ARRIVE")) { icon = "🏁"; teks = "Tiba di Tujuan"; }
+  else if (maneuver.includes("UTURN")) { icon = "🔄"; teks = "Putar Balik"; }
+  else if (maneuver.includes("LEFT")) { icon = "⬅️"; teks = message || "Belok Kiri"; }
+  else if (maneuver.includes("RIGHT")) { icon = "➡️"; teks = message || "Belok Kanan"; }
+  else if (maneuver.includes("ROUNDABOUT")) { icon = "🔄"; teks = message || "Masuk Bundaran"; }
+  else if (maneuver.includes("EXIT") || maneuver.includes("MOTORWAY")) { icon = "↗️"; }
+  else if (maneuver.includes("KEEP")) { icon = maneuver.includes("LEFT") ? "↖️" : "↗️"; }
 
   document.getElementById("turnIcon").textContent = icon;
-
   document.getElementById("turnText").textContent = teks;
+  document.getElementById("turnDist").textContent = distToNextTurn > 0 ? formatJarak(distToNextTurn) + " lagi" : "Segera";
 
-  document.getElementById("turnDist").textContent =
-
-    distToNextTurn > 0
-
-      ? formatJarak(distToNextTurn) + " lagi"
-
-      : "Segera";
-
-  // SUARA INSTRUKSI
-
-  const isTurnInstruction =
-
-    !maneuver.includes("STRAIGHT") &&
-
-    !maneuver.includes("DEPART") &&
-
-    !maneuver.includes("ARRIVE") &&
-
-    maneuver.length > 0;
+  // ================= LOGIKA SUARA =================
+  const isTurnInstruction = !maneuver.includes("STRAIGHT") && !maneuver.includes("DEPART") && !maneuver.includes("ARRIVE") && maneuver.length > 0;
 
   if (isTurnInstruction) {
-
-    if (
-
-      distToNextTurn <= 210 &&
-
-      distToNextTurn > 190 &&
-
-      !belokan200SudahBerbunyi
-
-    ) {
-
+    if (distToNextTurn <= 210 && distToNextTurn > 190 && !belokan200SudahBerbunyi) {
       putarSuara("Dalam 200 meter, " + teks);
-
       belokan200SudahBerbunyi = true;
-
     }
-
-    if (
-
-      distToNextTurn <= 60 &&
-
-      distToNextTurn > 40 &&
-
-      !belokan50SudahBerbunyi
-
-    ) {
-
+    if (distToNextTurn <= 60 && distToNextTurn > 40 && !belokan50SudahBerbunyi) {
       putarSuara("Dalam 50 meter, " + teks);
-
       belokan50SudahBerbunyi = true;
-
     }
-
   }
 
   if (teks !== instruksiTerakhir) {
-
     instruksiTerakhir = teks;
-
     belokan200SudahBerbunyi = false;
-
     belokan50SudahBerbunyi = false;
-
   }
-
 }
 
 // ============================================================
 // UTILITAS JARAK
 // ============================================================
-
 function jarakMeter(lat1, lng1, lat2, lng2) {
-
   const R = 6371000;
-
   const dLat = (lat2 - lat1) * Math.PI / 180;
-
   const dLng = (lng2 - lng1) * Math.PI / 180;
-
-  const a =
-
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-
-    Math.cos(lat1 * Math.PI / 180) *
-
-    Math.cos(lat2 * Math.PI / 180) *
-
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-
-  return R * 2 * Math.atan2(
-
-    Math.sqrt(a),
-
-    Math.sqrt(1 - a)
-
-  );
-
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 function formatJarak(meter) {
-
-  if (meter < 1000) {
-
-    return Math.round(meter) + " m";
-
-  }
-
+  if (meter < 1000) return Math.round(meter) + " m";
   return (meter / 1000).toFixed(1) + " km";
-
 }
 
 // ============================================================
 // START APLIKASI
 // ============================================================
-
 document.addEventListener("DOMContentLoaded", function() {
-
   initMap();
-
-  document.getElementById("inputTujuan").addEventListener(
-
-    "input",
-
-    function() {
-
-      titikTujuan = null;
-
-      if (markerTujuan) {
-
-        markerTujuan.remove();
-
-        markerTujuan = null;
-
-      }
-
-      cekFormRencana();
-
+  
+  document.getElementById("inputTujuan").addEventListener("input", function() {
+    titikTujuan = null;
+    if (markerTujuan) {
+      markerTujuan.remove();
+      markerTujuan = null;
     }
-
-  );
-
+    cekFormRencana();
+  });
 });
-
 </script>
-
 </body>
-</html>
+</html>                     
